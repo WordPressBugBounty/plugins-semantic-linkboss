@@ -1,0 +1,519 @@
+# Copyright (C) 2024 semantic-linkboss
+# This file is distributed under the ISC license.
+msgid ""
+msgstr ""
+"Project-Id-Version: semantic-linkboss 2.5.3\n"
+"Report-Msgid-Bugs-To: Shahidul Islam<bdkoder@gmail.com>, Samiur "
+"Prapon<samiur.prapon@gmail.com> <EMAIL>\n"
+"MIME-Version: 1.0\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+"POT-Creation-Date: 2024-11-16T18:25:40.685Z\n"
+"PO-Revision-Date: 2024-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Shahidul Islam<bdkoder@gmail.com>, Samiur "
+"Prapon<samiur.prapon@gmail.com> <EMAIL>\n"
+"Language-Team: Shahidul Islam<bdkoder@gmail.com>, Samiur "
+"Prapon<samiur.prapon@gmail.com> <EMAIL>\n"
+"X-Generator: @wp-blocks/make-pot 1.4.0\n"
+"Language: en\n"
+"domain: \n"
+
+#: semantic-linkboss.php
+#. Name of the plugin
+msgid "semantic-linkboss"
+msgstr ""
+
+#: semantic-linkboss.php
+#. Author URI of the plugin
+msgid ""
+msgstr ""
+
+#: semantic-linkboss.php
+#. Author of the plugin
+msgid "Shahidul Islam<bdkoder@gmail.com>, Samiur Prapon<samiur.prapon@gmail.com>"
+msgstr ""
+
+#: includes/class-admin.php:118
+msgid "No categories found."
+msgstr ""
+
+#: includes/class-admin.php:137
+#: includes/Classes/class-settings.php:71
+#: includes/Classes/class-settings.php:107
+#: includes/Classes/class-settings.php:149
+msgid ""
+"Failed to insert data. Please refresh your browser. If that doesn\\'t work, "
+"please contact support team."
+msgstr ""
+
+#: includes/class-admin.php:153
+msgid "Please enter a custom query."
+msgstr ""
+
+#: includes/class-admin.php:208
+msgid "Saved successfully, Please wait for the page to reload after pressing OK."
+msgstr ""
+
+#: dci/notice.php:21
+msgid "Never miss an important update."
+msgstr ""
+
+#: dci/notice.php:24
+msgid ""
+"Get notified when there are new updates available for your plugins and "
+"themes. In the current version of this message it is clear that you are "
+"being sent a confirmation email to confirm your opt-in."
+msgstr ""
+
+#: dci/notice.php:42
+msgid "Allow & Continue"
+msgstr ""
+
+#: dci/notice.php:46
+msgid "Skip"
+msgstr ""
+
+#: dci/notice.php:52
+msgid "Which permission are being granted?"
+msgstr ""
+
+#: dci/notice.php:64
+msgid "View Basic Profile Info."
+msgstr ""
+
+#: dci/notice.php:67
+msgid "Your WordPress user\\'s first & last name, and email address."
+msgstr ""
+
+#: dci/notice.php:79
+msgid "View Basic Website Info."
+msgstr ""
+
+#: dci/notice.php:82
+msgid "Homepage URL & title, WP & PHP versions, and site language."
+msgstr ""
+
+#: dci/notice.php:94
+msgid "View Basic Plugin Info."
+msgstr ""
+
+#: dci/notice.php:97
+msgid "Current Plugin & SDK versions, and if active or uninstalled."
+msgstr ""
+
+#: dci/insights.php:654
+msgid "Learn More"
+msgstr ""
+
+#: dci/insights.php:663
+msgid "Yes, I\\'d Love To Contribute"
+msgstr ""
+
+#: dci/insights.php:666
+msgid "Skip For Now"
+msgstr ""
+
+#: dci/insights.php:669
+msgid "No Thanks"
+msgstr ""
+
+#: dci/insights.php:704
+msgid "What we"
+msgstr ""
+
+#: dci/insights.php:705
+msgid "collect"
+msgstr ""
+
+#: dci/insights.php:713
+msgid "Allow"
+msgstr ""
+
+#: dci/insights.php:716
+msgid "I\\'ll Skip For Now"
+msgstr ""
+
+#: dci/insights.php:719
+msgid "Don\\'t Allow"
+msgstr ""
+
+#: dci/deactivate-feedback.php:48
+msgid "Give feedback"
+msgstr ""
+
+#: dci/deactivate-feedback.php:49
+msgid ""
+"Goodbyes are never easy. If you have a moment, please share your feedback "
+"on how we can improve."
+msgstr ""
+
+#: dci/deactivate-feedback.php:75
+msgid "Switching Domain"
+msgstr ""
+
+#: dci/deactivate-feedback.php:99
+msgid "Couldn\\'t understand"
+msgstr ""
+
+#: dci/deactivate-feedback.php:147
+msgid "Found a better plugin"
+msgstr ""
+
+#: dci/deactivate-feedback.php:164
+msgid "Missing a specific feature"
+msgstr ""
+
+#: dci/deactivate-feedback.php:203
+msgid "Not working"
+msgstr ""
+
+#: dci/deactivate-feedback.php:228
+msgid "Others"
+msgstr ""
+
+#: dci/deactivate-feedback.php:236
+msgid "What is the main reason for deactivating?"
+msgstr ""
+
+#: dci/deactivate-feedback.php:242
+msgid "Skip & Deactivate"
+msgstr ""
+
+#: dci/deactivate-feedback.php:246
+msgid "Cancel"
+msgstr ""
+
+#: dci/deactivate-feedback.php:251
+msgid "Submit & Deactivate"
+msgstr ""
+
+#: includes/Classes/class-update-posts.php:62
+msgid "Sync Ongoing and that\\'s why Post Update Blocked."
+msgstr ""
+
+#: includes/Classes/class-update-posts.php:101
+msgid "Response Error!"
+msgstr ""
+
+#: includes/Classes/class-update-posts.php:112
+msgid "No data to Update"
+msgstr ""
+
+#: includes/Classes/class-settings.php:88
+msgid "Congrats, the API Key was saved successfully."
+msgstr ""
+
+#: includes/Classes/class-settings.php:132
+msgid "Congrats, the sync batch was reset successfully."
+msgstr ""
+
+#: includes/Classes/class-settings.php:166
+msgid "Congrats, the sync speed was saved successfully."
+msgstr ""
+
+#: includes/Classes/class-render.php:85
+msgid "ago"
+msgstr ""
+
+#: includes/Classes/class-posts.php:72
+msgid "Please Try Again."
+msgstr ""
+
+#: includes/Classes/class-posts.php:382
+#: includes/Classes/class-ajax-sync.php:457
+msgid "Something went wrong!"
+msgstr ""
+
+#: includes/Classes/class-notices.php:45
+msgid "LinkBoss API Key is not set. Please set it from "
+msgstr ""
+
+#: includes/Classes/class-notices.php:45
+#: includes/Classes/class-notices.php:51
+msgid "here"
+msgstr ""
+
+#: includes/Classes/class-notices.php:51
+msgid "LinkBoss Access Token is not found. Please save the settings from "
+msgstr ""
+
+#: includes/Classes/class-notices.php:62
+msgid ""
+"LinkBoss functionality is currently disabled due to the deactivation of "
+"WordPress Cron. Please enable it to sync posts."
+msgstr ""
+
+#: includes/Classes/class-cron.php:149
+#: includes/Classes/class-cron.php:174
+msgid "Custom Schedule"
+msgstr ""
+
+#: includes/Classes/class-ajax-sync.php:373
+msgid "Posts are up to date."
+msgstr ""
+
+#: includes/Classes/class-ajax-init.php:162
+msgid "Batch Synced"
+msgstr ""
+
+#: includes/Classes/class-ajax-init.php:172
+#: includes/Classes/class-ajax-init.php:263
+msgid "No new posts to sync"
+msgstr ""
+
+#: includes/Classes/class-ajax-init.php:253
+msgid "Meta Batch Synced"
+msgstr ""
+
+#: includes/Admin/class-menu.php:50
+#: includes/Admin/class-menu.php:51
+msgid "LinkBoss"
+msgstr ""
+
+#: includes/Admin/class-menu.php:61
+#: includes/Admin/class-menu.php:62
+msgid "Settings"
+msgstr ""
+
+#: includes/Admin/class-menu.php:70
+#: includes/Admin/class-menu.php:71
+msgid "Logs"
+msgstr ""
+
+#: includes/Admin/class-menu.php:79
+#: includes/Admin/class-menu.php:80
+msgid "Upgrade"
+msgstr ""
+
+#: includes/Admin/class-menu.php:99
+msgid "HappyAddons"
+msgstr ""
+
+#: includes/Admin/class-menu.php:106
+msgid "Sync from LinkBoss"
+msgstr ""
+
+#: includes/Admin/class-menu.php:116
+msgid "Sync to LinkBoss"
+msgstr ""
+
+#: includes/Admin/views/settings.php:25
+msgid "Prepare Your Data for Syncing."
+msgstr ""
+
+#: includes/Admin/views/settings.php:28
+msgid ""
+"Initiate your database for seamless synchronization; a brief setup "
+"initially, followed by automatic functionality."
+msgstr ""
+
+#: includes/Admin/views/settings.php:120
+msgid "Prepare Data"
+msgstr ""
+
+#: includes/Admin/views/settings.php:128
+msgid "Custom Query Builder"
+msgstr ""
+
+#: includes/Admin/views/settings.php:132
+msgid "Use the custom query builder to SYNC your desired Posts."
+msgstr ""
+
+#: includes/Admin/views/settings.php:139
+msgid "Post Sources"
+msgstr ""
+
+#: includes/Admin/views/settings.php:154
+msgid "Categories"
+msgstr ""
+
+#: includes/Admin/views/settings.php:159
+msgid "All"
+msgstr ""
+
+#: includes/Admin/views/settings.php:163
+msgid "Leave this field empty to sync All Categories."
+msgstr ""
+
+#: includes/Admin/views/settings.php:172
+msgid "Save Query"
+msgstr ""
+
+#: includes/Admin/views/settings.php:203
+msgid "SYNCING..."
+msgstr ""
+
+#: includes/Admin/views/settings.php:215
+msgid "Your API Key"
+msgstr ""
+
+#: includes/Admin/views/settings.php:229
+msgid "Force Sync Data"
+msgstr ""
+
+#: includes/Admin/views/settings.php:242
+msgid "Save Settings & Sync"
+msgstr ""
+
+#: includes/Admin/views/settings.php:258
+msgid ""
+"Make sure all the contents(posts and pages) are prepared(On Batch) before "
+"pressing this button.\t"
+msgstr ""
+
+#: includes/Admin/views/settings.php:268
+msgid "Authentication requirements:"
+msgstr ""
+
+#: includes/Admin/views/settings.php:272
+msgid "Open your linkboss account from"
+msgstr ""
+
+#: includes/Admin/views/settings.php:276
+msgid "Add this domain to your account"
+msgstr ""
+
+#: includes/Admin/views/settings.php:284
+msgid "Copy the API key from site settings and paste it here"
+msgstr ""
+
+#: includes/Admin/views/settings.php:287
+msgid "Click \"Prepare Data\" to get your Posts and Pages ready to Sync"
+msgstr ""
+
+#: includes/Admin/views/settings.php:290
+msgid "Wait till your Pages and Posts count matches your existing site data"
+msgstr ""
+
+#: includes/Admin/views/settings.php:293
+msgid ""
+"Now click \"Save Settings & Sync\" and wait for the \"All the prepared "
+"contents are now synced!\" message"
+msgstr ""
+
+#: includes/Admin/views/settings.php:296
+msgid "Go to the app\\'s Dashboard and do a reload"
+msgstr ""
+
+#: includes/Admin/views/settings.php:299
+msgid "The Configure button will turn into Tools"
+msgstr ""
+
+#: includes/Admin/views/settings.php:303
+msgid "Video Tutorial :"
+msgstr ""
+
+#: includes/Admin/views/settings.php:326
+#: includes/Admin/views/settings.php:338
+msgid "Reset Sync Batch"
+msgstr ""
+
+#: includes/Admin/views/settings.php:329
+msgid "If you want to reset the sync batch, click the button below."
+msgstr ""
+
+#: includes/Admin/views/settings.php:345
+msgid "Sync Speed"
+msgstr ""
+
+#: includes/Admin/views/settings.php:348
+msgid "If you encounter any difficulties, try reducing the speed and sync again."
+msgstr ""
+
+#: includes/Admin/views/settings.php:361
+msgid "Very Slow (100KB)"
+msgstr ""
+
+#: includes/Admin/views/settings.php:364
+msgid "Slow (200KB)"
+msgstr ""
+
+#: includes/Admin/views/settings.php:367
+msgid "Medium (300KB)"
+msgstr ""
+
+#: includes/Admin/views/settings.php:370
+msgid "Fast (512)"
+msgstr ""
+
+#: includes/Admin/views/settings.php:378
+msgid "Save Speed"
+msgstr ""
+
+#: includes/Admin/views/settings.php:384
+msgid "Builder Detected"
+msgstr ""
+
+#: includes/Admin/views/logs.php:23
+msgid "Latest Updated Posts & Pages Logs."
+msgstr ""
+
+#: includes/Admin/views/logs.php:25
+msgid "The most recent 200 posts & pages."
+msgstr ""
+
+#: includes/Admin/views/logs.php:35
+#: includes/Admin/views/inc/report.php:130
+msgid "Pages & Posts"
+msgstr ""
+
+#: includes/Admin/views/logs.php:38
+msgid "Time"
+msgstr ""
+
+#: includes/Admin/views/logs.php:41
+msgid "Status"
+msgstr ""
+
+#: includes/Admin/views/logs.php:89
+msgid "No logs available."
+msgstr ""
+
+#: includes/Admin/views/layouts.php:20
+msgid "Error!"
+msgstr ""
+
+#: includes/Admin/views/layouts.php:24
+msgid "Ops!"
+msgstr ""
+
+#: includes/Admin/views/layouts.php:26
+msgid "Your API is not connected."
+msgstr ""
+
+#: includes/Admin/views/inc/report.php:92
+msgid "Sync Data"
+msgstr ""
+
+#: includes/Admin/views/inc/report.php:122
+msgid "Latest Updated Posts & Pages."
+msgstr ""
+
+#: includes/Admin/views/inc/report.php:124
+msgid "The following posts and pages have been updated recently."
+msgstr ""
+
+#: includes/Admin/views/inc/report.php:133
+msgid "Updated At"
+msgstr ""
+
+#: includes/Admin/views/inc/footer.php:11
+msgid "Thank You for Using"
+msgstr ""
+
+#: includes/Admin/views/inc/footer.php:19
+msgid "About"
+msgstr ""
+
+#: includes/Admin/views/inc/footer.php:24
+msgid "Contact"
+msgstr ""
+
+#: includes/Admin/views/inc/footer.php:29
+msgid "Terms & Conditions"
+msgstr ""
+
+#: includes/Admin/views/inc/footer.php:34
+msgid "Privacy Policy"
+msgstr ""
