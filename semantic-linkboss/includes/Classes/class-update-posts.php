@@ -167,11 +167,6 @@ class Update_Posts {
 		// $before_more_content = self::thrive_extract_content_before_more( $content, $post_id );
 		// update_post_meta( $post_id, $before_more_key, $before_more_content );
 
-		// error_log all the data
-		error_log( 'Thrive data updated for post ID: ' . $post_id );
-		// error_log( 'Thrive data: ' . print_r( $data, true ) );
-		error_log( 'Thrive data: ' . print_r( $content_key, true ) );
-
 		return true;
 	}
 
@@ -205,7 +200,10 @@ class Update_Posts {
 			 * Solved by @sabbir
 			 */
 			if ( isset( $post_data['builder'] ) && 'elementor' === $post_data['builder'] && isset( $post_data['meta'] ) ) {
-				update_post_meta( $post_id, '_elementor_data', $post_data['meta'] );
+				// Use wp_json_encode to properly encode the JSON data
+				$encoded_meta = addslashes( wp_json_encode( $post_data['meta'] ) );
+				// Update the post meta with properly encoded JSON
+				update_post_meta( $post_id, '_elementor_data', $encoded_meta );
 			}
 
 			/**
@@ -239,7 +237,6 @@ class Update_Posts {
 			 * @since 2.5.0
 			 */
 			if ( isset( $post_data['builder'] ) && 'thrive' === $post_data['builder'] && isset( $post_data['meta'] ) ) {
-				error_log('Condition Correct');
 				self::updateThriveData( $post_id, $post_content );
 			}
 

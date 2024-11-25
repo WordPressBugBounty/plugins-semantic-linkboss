@@ -203,7 +203,7 @@ class Ajax_Sync {
 
 		$thrive_content = get_post_meta( $post_id, $content_key, true );
 
-		$rendered_content = ! empty($thrive_content) ? $thrive_content : $post_content;
+		$rendered_content = ! empty( $thrive_content ) ? $thrive_content : $post_content;
 
 		return ! ( empty( $rendered_content ) ) ? $rendered_content : "";
 	}
@@ -239,11 +239,31 @@ class Ajax_Sync {
 					$builder_type = 'elementor';
 					$elementor_data = get_post_meta( $post->ID, '_elementor_data' );
 
-					$rendered_content = \Elementor\Plugin::$instance->frontend->get_builder_content_for_display( $post->ID, false );
-					$rendered_content = str_replace( "&#8217;", "'", $rendered_content );
-					$rendered_content = preg_replace( '/<style\b[^>]>(.?)<\/style>/is', "", $rendered_content );
-					$rendered_content = preg_replace( '/<style\b[^>]*>(.*?)<\/style>/is', "", $rendered_content );
-					$rendered_content = preg_replace( '/<div class="elementor-post__card">.*?<\/div>/is', "", $rendered_content );
+					$rendered_content = \Elementor\Plugin::$instance->frontend->get_builder_content( $post->ID, false );
+
+					$rendered_content = preg_replace(
+						[ 
+							'/<style\b[^>]*>(.*?)<\/style>/is',
+							'/<div class="elementor-post__card">.*?<\/div>/is'
+						],
+						"",
+						$rendered_content
+					);
+
+					$rendered_content = str_replace(
+						[ 
+							"&#8211;", "&#8212;", "&#8216;", "&#8217;",
+							"&#8220;", "&#8221;", "&#8722;", "&#8230;",
+							"&#34;", "&#36;", "&#39;"
+						],
+						[ 
+							"–", "—", "‘", "'",
+							"“", "”", "−", "…",
+							"\"", "$", "'"
+						],
+						$rendered_content
+					);
+
 
 				}
 			}
@@ -295,7 +315,7 @@ class Ajax_Sync {
 				}
 			}
 
-			if( defined( 'TVE_IN_ARCHITECT' ) ) {
+			if ( defined( 'TVE_IN_ARCHITECT' ) ) {
 				$thrive_content = self::getThriveContent( $post->ID, $post->post_content );
 				if ( ! empty( $thrive_content ) ) {
 					$builder_type = 'thrive';
@@ -339,11 +359,11 @@ class Ajax_Sync {
 						return null;
 					}
 					break;
-				
+
 				case 'thrive':
 					$meta = null;
 					break;
-				
+
 				default:
 					$meta = null;
 			}

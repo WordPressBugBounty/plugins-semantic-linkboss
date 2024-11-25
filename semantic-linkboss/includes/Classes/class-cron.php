@@ -103,23 +103,23 @@ class Cron {
 		 * @since 2.3.0
 		 */
 		$query_data = get_option( 'linkboss_custom_query', '' );
-		$post_type = isset( $query_data['post_sources'] ) && ! empty( $query_data['post_sources'] ) ? $query_data['post_sources'] : array('');
+		$post_type = isset( $query_data['post_sources'] ) && ! empty( $query_data['post_sources'] ) ? $query_data['post_sources'] : array( 'post', 'page' );
 
 		/**
-		 * Remove 'page' and 'post' from post_type
+		 * If custom post types are specified, ensure 'post' and 'page' are included if they are in the custom query
 		 */
-		if ( in_array( 'post', $post_type ) ) {
-			$key = array_search( 'post', $post_type );
-			unset( $post_type[ $key ] );
-		}
+		if ( ! empty( $query_data['post_sources'] ) ) {
+			if ( ! in_array( 'post', $post_type ) && in_array( 'post', $query_data['post_sources'] ) ) {
+				$post_type[] = 'post';
+			}
 
-		if ( in_array( 'page', $post_type ) ) {
-			$key = array_search( 'page', $post_type );
-			unset( $post_type[ $key ] );
+			if ( ! in_array( 'page', $post_type ) && in_array( 'page', $query_data['post_sources'] ) ) {
+				$post_type[] = 'page';
+			}
 		}
 
 		/**
-		 * If not 'post' or 'page' then add custom post type to hook
+		 * Add custom post types to hook if specified
 		 * 
 		 * @since 2.3.0
 		 */
@@ -130,6 +130,45 @@ class Cron {
 			}
 		}
 
+		/**
+		 * If no custom post types are specified, default to 'post' and 'page'
+		 */
+		if ( empty( $query_data['post_sources'] ) ) {
+			add_action( 'publish_post', array( $this, 'sync_posts_on_post_update' ), 20, 3 );
+			add_action( 'trash_post', array( $this, 'sync_posts_on_post_update' ), 20, 3 );
+
+			add_action( 'publish_page', array( $this, 'sync_posts_on_post_update' ), 20, 3 );
+			add_action( 'trash_page', array( $this, 'sync_posts_on_post_update' ), 20, 3 );
+		}
+
+		add_action( 'save_post', array( $this, 'post_update_save_trigger' ), 10, 3 );
+
+	}
+
+
+	public function post_update_save_trigger( $post_id, $post, $update ) {
+		// Avoid infinite loops caused by auto-saves.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		// Skip revisions and auto-draft posts.
+		if ( wp_is_post_revision( $post_id ) || $post->post_status === 'auto-draft' ) {
+			return;
+		}
+
+		// Skip if the post is not published.
+		if ( $post->post_status !== 'publish' ) {
+			return;
+		}
+
+		// skip if post meta _elementor_data exists
+		if ( self::is_elementor_post( $post_id ) ) {
+			return;
+		}
+		
+		// Perform your custom logic after save/publish.
+		$this->sync_posts_on_post_update( $post_id );
 	}
 
 	/**
@@ -144,7 +183,7 @@ class Cron {
 		 * Add a filter for custom schedule with the provided interval and $hook
 		 */
 		add_filter( 'cron_schedules', function ($schedules) use ($hook, $interval) {
-			$schedules[ $hook ] = array (
+			$schedules[ $hook ] = array(
 				'interval' => $interval,
 				'display' => esc_html__( 'Custom Schedule', 'semantic-linkboss' ),
 			);
@@ -199,14 +238,7 @@ class Cron {
 	 * @since 0.0.6
 	 */
 	public static function sync_posts_on_post_update( $post_id ) {
-
-		// error_log( print_r( 'hook fired', true ) );
 		
-		// check which hook fired
-		// error_log( print_r( current_filter(), true ) );
-		// error_log( print_r( $post_id, true ) );
-
-
 		$updates_obj = new Updates();
 		$updates_obj->data_sync_require( $post_id );
 

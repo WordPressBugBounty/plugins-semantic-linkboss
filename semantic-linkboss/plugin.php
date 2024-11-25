@@ -55,6 +55,13 @@ final class Plugin {
 				require_once SEMANTIC_LB_INC_PATH . 'Classes/Builders/class-elementor.php';
 			}
 		}
+
+		/**
+		 * Admin Files Only
+		 */
+		if ( is_admin() ) {
+			require_once SEMANTIC_LB_INC_PATH . 'Admin/class-admin-feeds.php';
+		}
 	}
 	/**
 	 * Init Plugin

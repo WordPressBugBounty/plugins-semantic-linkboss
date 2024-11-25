@@ -544,8 +544,6 @@ if ( ! class_exists( 'Insights_SDK' ) ) {
 				'body' => wp_json_encode( $data ),
 			);
 
-			// error_log( print_r( $args, true ) );
-
 			$response = wp_remote_request( $server_url, $args );
 
 			if ( is_wp_error( $response ) ) {

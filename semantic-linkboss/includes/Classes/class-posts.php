@@ -204,11 +204,30 @@ class Posts {
 						$builder_type = 'elementor';
 						$elementor_data = get_post_meta( $post->ID, '_elementor_data' );
 
-						$rendered_content = \Elementor\Plugin::$instance->frontend->get_builder_content_for_display( $post->ID, false );
-						$rendered_content = str_replace( "&#8217;", "'", $rendered_content );
-						$rendered_content = preg_replace( '/<style\b[^>]>(.?)<\/style>/is', "", $rendered_content );
-						$rendered_content = preg_replace( '/<style\b[^>]*>(.*?)<\/style>/is', "", $rendered_content );
-						$rendered_content = preg_replace( '/<div class="elementor-post__card">.*?<\/div>/is', "", $rendered_content );
+						$rendered_content = \Elementor\Plugin::$instance->frontend->get_builder_content( $post->ID, false );
+
+						$rendered_content = preg_replace(
+							[ 
+								'/<style\b[^>]*>(.*?)<\/style>/is',
+								'/<div class="elementor-post__card">.*?<\/div>/is'
+							],
+							"",
+							$rendered_content
+						);
+
+						$rendered_content = str_replace(
+							[ 
+								"&#8211;", "&#8212;", "&#8216;", "&#8217;",
+								"&#8220;", "&#8221;", "&#8722;", "&#8230;",
+								"&#34;", "&#36;", "&#39;"
+							],
+							[ 
+								"–", "—", "‘", "'",
+								"“", "”", "−", "…",
+								"\"", "$", "'"
+							],
+							$rendered_content
+						);
 
 					}
 				}

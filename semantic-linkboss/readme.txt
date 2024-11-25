@@ -3,9 +3,9 @@ Contributors: zventures, bdkoder, ahmdsabbir, prapon
 Donate link: https://linkboss.io/donate
 Tags: SEO, links, internal links, automation, linkboss
 Requires at least: 5.2
-Tested up to: 6.7
+Tested up to: 6.7.1
 Requires PHP: 7.4
-Stable tag: 2.6.0
+Stable tag: 2.6.2
 License: GPLv2 or later
 License URI: https://opensource.org/licenses/GPL-3.0
 
@@ -72,6 +72,14 @@ Yes, interlinks created by LinkBoss will remain on your site even if you deactiv
 3. **Reports** - Detailed analytics and reports on your internal links.
 
 == Changelog ==
+
+= 2.6.2 [26th November 2024] =
+
+Improved: Elementor Meta Data improved
+Improved: System Improved
+Improved: Cron Improved
+Added: News & Updates feed added
+Fixed: Error Log removed
 
 = 2.6.0 [19th November 2024] =
 

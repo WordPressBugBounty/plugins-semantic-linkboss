@@ -79,9 +79,6 @@ trait Global_Functions {
 
 		$is_page = in_array( 'page', $post_type ) || ( 'page' === $_post_type ) ? true : false;
 
-		// error_log( print_r( $_post_type, true ) );
-		// error_log( print_r( $post_type, true ) );
-
 		$__post_type = $post_type;
 		// remove 'page' from the array
 		if(false === $_post_type){
@@ -144,7 +141,6 @@ trait Global_Functions {
 
 			$pages = get_posts( $page_args );
 			$page_yes = true;
-			// error_log( 'XX' );
 		}
 
 		/**
@@ -165,7 +161,6 @@ trait Global_Functions {
 
 			if( false === $page_yes ){
 				$pages = get_posts( $page_args );
-				// error_log( 'YY' );
 			}
 			
 
@@ -193,8 +188,6 @@ trait Global_Functions {
 		 * Merge posts and pages
 		 */
 		$all_posts = array_merge( $posts, $pages );
-
-		// error_log( print_r( $all_posts, true ) );
 
 		return $all_posts;
 	}
