@@ -53,7 +53,7 @@ class Notices {
 		}
 
 		if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) {
-			$dismissed = get_transient( 'lbw_cron_notice_dismissed' );
+			$dismissed = get_option( 'lbw_cron_notice_dismissed', false );
 			if ( $dismissed ) {
 				return;
 			}
@@ -101,7 +101,7 @@ class Notices {
 		}
 
 		if ( 'cron_dismissed' === $notice ) {
-			set_transient( 'lbw_cron_notice_dismissed', true, 60 * 60 * 24 * 60 );
+			update_option( 'lbw_cron_notice_dismissed', true);
 			wp_send_json_success();
 		}
 

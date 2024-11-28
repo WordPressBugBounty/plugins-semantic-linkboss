@@ -96,6 +96,18 @@ class Auth {
 		$response = wp_remote_post( $api_url, $arg );
 		$res_body = json_decode( wp_remote_retrieve_body( $response ) );
 
+		if ( wp_remote_retrieve_response_code( $response ) == 405 ) {
+			$msg = isset( $res_body->message ) ? $res_body->message : '';
+			echo wp_json_encode(
+				array(
+					'status' => 'error',
+					'title' => 'Error!',
+					'msg' => esc_html( $msg . '. This site may have been removed from the LinkBoss app due to inactivity within the last 10 minutes. Please re-add the site through the app dashboard to continue. Error Code - ' . wp_remote_retrieve_response_code( $response ) ),
+				)
+			);
+			wp_die();
+		}
+
 		if ( wp_remote_retrieve_response_code( $response ) !== 200 ) {
 			$msg = isset( $res_body->message ) ? $res_body->message : '';
 			echo wp_json_encode(

@@ -255,6 +255,15 @@ class Update_Posts {
 					),
 					array( 'ID' => $post_id )
 				);
+
+				/**
+				 * Flush object cache for this post
+				 */
+				if ( $post_updated ) {
+					wp_cache_delete( $post_id, 'posts' ); // Clear the object cache for the post
+					clean_post_cache( $post_id ); // Additional function to clear all caches related to the post
+				}
+
 			}
 
 			/**
