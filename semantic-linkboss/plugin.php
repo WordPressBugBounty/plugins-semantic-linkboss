@@ -23,46 +23,13 @@ use SEMANTIC_LB\Classes\Auth;
 
 final class Plugin {
 
+
 	/**
 	 * Require Files
 	 *
 	 * @return void
 	 */
-	public function includes_files() {
-		require_once SEMANTIC_LB_INC_PATH . 'Traits/global-functions.php';
-		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-init.php';
-		require_once SEMANTIC_LB_INC_PATH . 'class-admin.php';
-		require_once SEMANTIC_LB_INC_PATH . 'Admin/class-layouts.php';
-		require_once SEMANTIC_LB_INC_PATH . 'Admin/class-menu.php';
-		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-auth.php';
-		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-settings.php';
-		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-render.php';
-		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-ajax-init.php';
-		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-notices.php';
 
-		$api_valid = get_option( 'linkboss_api_key', false );
-
-		if ( $api_valid ) {
-
-			require_once SEMANTIC_LB_INC_PATH . 'Classes/class-posts.php';
-			require_once SEMANTIC_LB_INC_PATH . 'Classes/class-update-posts.php';
-			require_once SEMANTIC_LB_INC_PATH . 'Classes/class-updates.php';
-			require_once SEMANTIC_LB_INC_PATH . 'Classes/class-fetch.php';
-			require_once SEMANTIC_LB_INC_PATH . 'Classes/class-cron.php';
-			require_once SEMANTIC_LB_INC_PATH . 'Classes/class-ajax-sync.php';
-
-			if ( defined( 'SEMANTIC_LB_ELEMENTOR' ) ) {
-				require_once SEMANTIC_LB_INC_PATH . 'Classes/Builders/class-elementor.php';
-			}
-		}
-
-		/**
-		 * Admin Files Only
-		 */
-		if ( is_admin() ) {
-			require_once SEMANTIC_LB_INC_PATH . 'Admin/class-admin-feeds.php';
-		}
-	}
 	/**
 	 * Init Plugin
 	 *
@@ -70,78 +37,88 @@ final class Plugin {
 	 * @return void
 	 */
 	public function init() {
-		$this->includes_files();
-		new Admin();
 	}
 
 	/**
-	 * Enqueue Styles
+	 * Admind Styles
 	 *
-	 * @since 0.0.0
+	 * @since 2.6.5
 	 */
-	public function enqueue_admin_styles( $hook_suffix) {
+	public function enqueue_styles( $hook_suffix ) {
+		if ( 'toplevel_page_semantic-linkboss' !== $hook_suffix && 'semantic-linkboss_page_semantic-linkboss-get-pro' !== $hook_suffix ) {
+			return;
+		}
+		$direction_suffix = is_rtl() ? '.rtl' : '';
+		wp_enqueue_style( 'wp-components' );
+		wp_register_style( 'semantic-linkboss', SEMANTIC_LB_URL . 'build/index.css', array(), SEMANTIC_LB_VERSION );
+		wp_enqueue_style( 'semantic-linkboss' );
+	}
 
-		if (
-			'toplevel_page_semantic-linkboss' !== $hook_suffix &&
-			'linkboss_page_semantic-linkboss-settings' !== $hook_suffix &&
-			'linkboss_page_semantic-linkboss-logs' !== $hook_suffix
-		) {
+	/**
+	 * Enqueue admin scripts
+	 *
+	 * @since 2.6.5
+	 * @return void
+	 */
+	public function enqueue_scripts( $hook_suffix ) {
+
+		wp_register_script( 'linkboss-socket', SEMANTIC_LB_ASSETS_URL . 'vendor/socket.io.min.js', array(), 'v4.8.1', true );
+		wp_enqueue_script( 'linkboss-socket' );
+
+		$access_token = Auth::get_access_token();
+		wp_localize_script(
+			'linkboss-socket',
+			'LinkBossSocket',
+			array(
+				'access_token' => $access_token,
+				'api_url'      => esc_url( SEMANTIC_LB_REMOTE_ROOT_URL ),
+				'assets_url'   => SEMANTIC_LB_ASSETS_URL,
+				'nonce'        => wp_create_nonce( 'wp_rest' ),
+			)
+		);
+
+		wp_register_script( 'semantic-linkboss-admin', SEMANTIC_LB_ASSETS_URL . 'js/semantic-linkboss-admin.js', array( 'jquery', 'linkboss-socket' ), SEMANTIC_LB_VERSION, true );
+		wp_enqueue_script( 'semantic-linkboss-admin' );
+
+		if ( 'toplevel_page_semantic-linkboss' !== $hook_suffix ) {
 			return;
 		}
 
-		$direction_suffix = is_rtl() ? '.rtl' : '';
-		wp_enqueue_style( 'linkboss-tailwind', SEMANTIC_LB_ASSETS_URL . 'css/tailwind' . $direction_suffix . '.min.css', array(), SEMANTIC_LB_VERSION );
-		wp_enqueue_style( 'lb-datatable', SEMANTIC_LB_ASSETS_URL . 'vendor/css/dataTables.tailwindcss.min.css', array(), '1.13.7' );
-		wp_enqueue_style( 'select2', SEMANTIC_LB_ASSETS_URL . 'vendor/css/select2.min.css', array(), '4.0.13' );
-		wp_enqueue_style( 'semantic-linkboss', SEMANTIC_LB_ASSETS_URL . 'css/semantic-linkboss' . $direction_suffix . '.min.css', array(), SEMANTIC_LB_VERSION );
-	}
+		$asset_file = plugin_dir_path( __FILE__ ) . 'build/index.asset.php';
 
-	/**
-	 * Enqueue Scripts
-	 *
-	 * @since 0.0.0
-	 */
-	public function enqueue_admin_scripts() {
-		/**
-		 * Vendor JS Files
-		 */
-		wp_enqueue_script( 'lb-datatable', SEMANTIC_LB_ASSETS_URL . 'vendor/js/jquery.dataTables.min.js', array( 'jquery' ), '1.13.7', true );
-		wp_enqueue_script( 'lb-datatable', SEMANTIC_LB_ASSETS_URL . 'vendor/js/dataTables.tailwindcss.js', array( 'jquery' ), '1.13.7', true );
-		wp_enqueue_script( 'lb-sweetalert2', SEMANTIC_LB_ASSETS_URL . 'vendor/js/sweetalert2.min.js', array( 'jquery' ), '11.4.8', true );
-		wp_enqueue_script( 'select2', SEMANTIC_LB_ASSETS_URL . 'vendor/js/select2.min.js', array( 'jquery' ), '4.0.13', true );
-		wp_enqueue_script( 'lb-vendor', SEMANTIC_LB_ASSETS_URL . 'vendor/socket.io.min.js', array(), SEMANTIC_LB_VERSION, true );
+		if ( ! file_exists( $asset_file ) ) {
+			return;
+		}
 
-		/**
-		 * Main JS File
-		 */
-		wp_enqueue_script( 'semantic-linkboss', SEMANTIC_LB_ASSETS_URL . 'js/semantic-linkboss.js', array( 'jquery' ), SEMANTIC_LB_VERSION, true );
+		$asset = include $asset_file;
+
+		// wp_register_script( 'semantic-linkboss-sweetalert2', SEMANTIC_LB_ASSETS_URL . 'vendor/sweetalert2.min.js', array( 'jquery' ), '11.4.8', true );
+		wp_register_script( 'semantic-linkboss', SEMANTIC_LB_URL . 'build/index.js', $asset['dependencies'], $asset['version'], true );
+		wp_enqueue_script( 'semantic-linkboss' );
+		// wp_enqueue_script( 'semantic-linkboss-sweetalert2' );
 
 		/**
 		 * Localize Script
 		 */
 		$script_config = array(
-			'ajaxurl' => admin_url( 'admin-ajax.php' ),
-			'nonce' => wp_create_nonce( 'linkboss_nonce' ),
-			'activated' => get_option( 'linkboss_api_key', false ),
+			'rest_url'     => esc_url( get_rest_url() ),
+			'app_api'      => esc_url( SEMANTIC_LB_REMOTE_URL ),
+			'staging'      => ! defined( 'SEMANTIC_LB_STAGING' ) ? true : false,
+			'version'      => SEMANTIC_LB_VERSION,
+			'nonce'        => wp_create_nonce( 'wp_rest' ),
+			'assets_url'   => SEMANTIC_LB_ASSETS_URL,
+			'logo'         => SEMANTIC_LB_ASSETS_URL . 'imgs/logo.png',
+			'root_url'     => SEMANTIC_LB_URL,
+			'current_user' => array(
+				'domain'       => esc_url( home_url() ),
+				'display_name' => wp_get_current_user()->display_name,
+				'email'        => wp_get_current_user()->user_email,
+				'id'           => wp_get_current_user()->ID,
+				'avatar'       => get_avatar_url( wp_get_current_user()->ID ),
+			),
 		);
 
-		$access_token = Auth::get_access_token();
-
-		wp_localize_script( 'semantic-linkboss', 'LinkbossConfig', $script_config );
-		wp_localize_script( 'semantic-linkboss', 'LinkbossSocket', array(
-			'access_token' => $access_token,
-			'api_url' => esc_url( SEMANTIC_LB_REMOTE_ROOT_URL ),
-		) );
-	}
-
-	/**
-	 * Setup Hooks
-	 *
-	 * @since 0.0.0
-	 */
-	private function setup_hooks() {
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_styles' ), 99999 );
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ), 9999 );
+		wp_localize_script( 'semantic-linkboss', 'LinkBossConfig', $script_config );
 	}
 
 	/**
@@ -152,6 +129,16 @@ final class Plugin {
 	public function __construct() {
 		$this->init();
 		$this->setup_hooks();
+	}
+
+	/**
+	 * Setup Hooks
+	 *
+	 * @since 0.0.0
+	 */
+	private function setup_hooks() {
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_styles' ), 99999 );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ), 99999 );
 	}
 }
 

@@ -14,6 +14,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use WP_REST_Controller;
+use WP_REST_Server;
+use WP_REST_Request;
+use WP_REST_Response;
+use WP_Error;
+
 use SEMANTIC_LB\Classes\Updates;
 use SEMANTIC_LB\Classes\Auth;
 
@@ -26,13 +32,19 @@ class Update_Posts {
 	private static $instance = null;
 
 	/**
-	 * Construct
+	 * Namespace
 	 *
-	 * @since 0.0.0
+	 * @var string
 	 */
-	public function __construct() {
-		add_action( 'wp_ajax_lb_fetch_update_posts', [ $this, 'fetch_update_posts' ] );
-	}
+	protected $namespace;
+
+	/**
+	 * Rest Base
+	 *
+	 * @var string
+	 */
+
+	protected $rest_base;
 
 	/**
 	 * Get Instance
@@ -48,6 +60,96 @@ class Update_Posts {
 	}
 
 	/**
+	 * Construct
+	 *
+	 * @since 0.0.0
+	 */
+	public function __construct() {
+		$this->namespace = 'linkboss/v1';
+		$this->rest_base = 'update-posts';
+		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+	}
+
+	/**
+	 * Register the routes
+	 *
+	 * @since 2.7.0
+	 */
+	public function register_rest_routes() {
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base,
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_update_posts_socket' ),
+				'permission_callback' => array( $this, 'get_permissions_check' ),
+			)
+		);
+	}
+
+	/**
+	 * Check the permissions for getting the settings
+	 *
+	 * @since 2.7.0
+	 */
+	public function get_permissions_check() {
+		return current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Update Posts
+	 *
+	 * @since 2.7.0
+	 */
+	public function get_update_posts_socket( $request ) {
+		$sync_status = get_transient( 'linkboss_sync_ongoing' );
+
+		if ( 'yes' === $sync_status ) {
+			return new WP_Error( 'sync_ongoing', esc_html__( 'Sync Ongoing and that\'s why Post Update Blocked.', 'semantic-linkboss' ), array( 'status' => 403 ) );
+		}
+
+		$api_url      = SEMANTIC_LB_POSTS_SYNC_URL;
+		$access_token = Auth::get_access_token();
+
+		if ( ! $access_token ) {
+			return Auth::get_tokens_by_auth_code();
+		}
+
+		$headers = array(
+			'Content-Type'     => 'application/json',
+			'Authorization'    => "Bearer $access_token",
+			'X-PLUGIN-VERSION' => SEMANTIC_LB_VERSION,
+		);
+
+		$arg = array(
+			'headers' => $headers,
+			'method'  => 'GET',
+		);
+
+		$response = wp_remote_get( $api_url, $arg );
+		$res_body = json_decode( wp_remote_retrieve_body( $response ), true );
+		$res_body = isset( $res_body['posts'] ) ? $res_body['posts'] : array();
+
+		$status = wp_remote_retrieve_response_code( $response );
+
+		if ( 401 === $status ) {
+			return Auth::get_tokens_by_auth_code();
+		}
+
+		if ( 200 !== $status ) {
+			return new WP_Error( 'response_error', esc_html__( 'Response Error!', 'semantic-linkboss' ), array( 'status' => $status ) );
+		}
+
+		if ( empty( $res_body ) ) {
+			return new WP_Error( 'no_data', esc_html__( 'No data to Update', 'semantic-linkboss' ), array( 'status' => 200 ) );
+		}
+
+		$res = self::update_posts( $res_body );
+
+		return new WP_REST_Response( $res );
+	}
+
+	/**
 	 * Fetch Posts by PUT request
 	 */
 	public static function fetch_update_posts() {
@@ -58,14 +160,14 @@ class Update_Posts {
 			echo wp_json_encode(
 				array(
 					'status' => 'error',
-					'title' => 'Error!',
-					'msg' => esc_html__( 'Sync Ongoing and that\'s why Post Update Blocked.', 'semantic-linkboss' ),
+					'title'  => 'Error!',
+					'msg'    => esc_html__( 'Sync Ongoing and that\'s why Post Update Blocked.', 'semantic-linkboss' ),
 				)
 			);
 			wp_die();
 		}
 
-		$api_url = SEMANTIC_LB_POSTS_SYNC_URL;
+		$api_url      = SEMANTIC_LB_POSTS_SYNC_URL;
 		$access_token = Auth::get_access_token();
 
 		if ( ! $access_token ) {
@@ -73,14 +175,14 @@ class Update_Posts {
 		}
 
 		$headers = array(
-			'Content-Type' => 'application/json',
-			'Authorization' => "Bearer $access_token",
+			'Content-Type'     => 'application/json',
+			'Authorization'    => "Bearer $access_token",
 			'X-PLUGIN-VERSION' => SEMANTIC_LB_VERSION,
 		);
 
 		$arg = array(
 			'headers' => $headers,
-			'method' => 'GET',
+			'method'  => 'GET',
 		);
 
 		$response = wp_remote_get( $api_url, $arg );
@@ -97,8 +199,8 @@ class Update_Posts {
 			echo wp_json_encode(
 				array(
 					'status' => 'error',
-					'title' => 'Error! ' . $status,
-					'msg' => esc_html__( 'Response Error!', 'semantic-linkboss' ),
+					'title'  => 'Error! ' . $status,
+					'msg'    => esc_html__( 'Response Error!', 'semantic-linkboss' ),
 				)
 			);
 			wp_die();
@@ -109,8 +211,8 @@ class Update_Posts {
 			echo wp_json_encode(
 				array(
 					'status' => 'success',
-					'title' => 'Success!',
-					'msg' => esc_html__( 'No data to Update', 'semantic-linkboss' ),
+					'title'  => 'Success!',
+					'msg'    => esc_html__( 'No data to Update', 'semantic-linkboss' ),
 				)
 			);
 			wp_die();
@@ -136,25 +238,25 @@ class Update_Posts {
 	/**
 	 * Update Thrive data in WordPress.
 	 *
-	 * @param int $post_id The ID of the post to update.
+	 * @param int   $post_id The ID of the post to update.
 	 * @param array $data The data to update.
 	 * @return bool True on success, false on failure.
 	 */
-	public static function updateThriveData( $post_id, $data ) {
+	public static function update_thrive_data( $post_id, $data ) {
 		if ( empty( $data ) ) {
 			return false;
 		}
 
-		$content_key = 'tve_updated_post';
+		$content_key     = 'tve_updated_post';
 		$thrive_template = get_post_meta( $post_id, 'tve_landing_page', true );
 
 		// see if this is a thrive templated page
 		if ( ! empty( $thrive_template ) ) {
 			// get the template key
-			$content_key = 'tve_updated_post_' . $thrive_template;
+			$content_key     = 'tve_updated_post_' . $thrive_template;
 			$before_more_key = 'tve_content_before_more_' . $thrive_template;
 		} else {
-			$content_key = 'tve_updated_post';
+			$content_key     = 'tve_updated_post';
 			$before_more_key = 'tve_content_before_more';
 		}
 
@@ -172,8 +274,6 @@ class Update_Posts {
 
 	/**
 	 * Server Response to Update Posts
-	 *
-	 * @return void
 	 */
 	public static function update_posts( $data ) {
 
@@ -186,16 +286,16 @@ class Update_Posts {
 		// Assuming $data is the array containing post data
 		foreach ( $data as $post_data ) {
 			// Prepare the post data for updating
-			$post_id = $post_data['_postId'];
-			$post_content = isset( $post_data['content'] ) && ! empty( $post_data['content'] ) ? $post_data['content'] : '';
+			$post_id       = $post_data['_postId'];
+			$post_content  = isset( $post_data['content'] ) && ! empty( $post_data['content'] ) ? $post_data['content'] : '';
 			$post_modified = $post_data['updatedAt'];
 
 			$timestamp = strtotime( $post_modified );
-			$date = gmdate( 'Y-m-d H:i:s', $timestamp );
+			$date      = gmdate( 'Y-m-d H:i:s', $timestamp );
 
 			/**
 			 * Update the Elementor data First
-			 * 
+			 *
 			 * @since 2.2.0
 			 * Solved by @sabbir
 			 */
@@ -208,7 +308,7 @@ class Update_Posts {
 
 			/**
 			 * Update the Bricks
-			 * 
+			 *
 			 * @since 2.5.0
 			 */
 			if ( isset( $post_data['builder'] ) && 'bricks' === $post_data['builder'] && isset( $post_data['meta'] ) ) {
@@ -217,7 +317,7 @@ class Update_Posts {
 
 			/**
 			 * Update the Oxygen
-			 * 
+			 *
 			 * @since 2.5.0
 			 */
 			if ( isset( $post_data['builder'] ) && 'oxygen' === $post_data['builder'] && isset( $post_data['meta'] ) ) {
@@ -225,19 +325,42 @@ class Update_Posts {
 				 * Check if data is array & Old Oxygen version
 				 */
 				$meta_exists = get_post_meta( $post_id, '_ct_builder_json', true );
-				$meta_value = is_array( $post_data['meta'] ) ? wp_slash( wp_json_encode( $post_data['meta'] ) ) : $post_data['meta'];
-				$meta_key = $meta_exists ? '_ct_builder_json' : 'ct_builder_json';
+				$meta_value  = is_array( $post_data['meta'] ) ? wp_slash( wp_json_encode( $post_data['meta'] ) ) : $post_data['meta'];
+				$meta_key    = $meta_exists ? '_ct_builder_json' : 'ct_builder_json';
 
 				update_post_meta( $post_id, $meta_key, $meta_value );
 			}
 
 			/**
 			 * Update the Thrive Content Builder
-			 * 
+			 *
 			 * @since 2.5.0
 			 */
 			if ( isset( $post_data['builder'] ) && 'thrive' === $post_data['builder'] && isset( $post_data['meta'] ) ) {
-				self::updateThriveData( $post_id, $post_content );
+				self::update_thrive_data( $post_id, $post_content );
+			}
+
+			/**
+			 * Update the Beaver meta
+			 *
+			 * @since 2.7.0
+			 */
+
+			if ( isset( $post_data['builder'] ) && 'beaver' === $post_data['builder'] && isset( $post_data['meta'] ) ) {
+
+				$meta_data = $post_data['meta'];
+				/**
+				 * Convert specific parts of the array to stdClass
+				 */
+				foreach ( $meta_data as $key => $value ) {
+					$meta_data[ $key ] = (object) $value;
+				}
+
+				/**
+				 * Serialize the array with objects and update post meta
+				 */
+				update_post_meta( $post_id, '_fl_builder_data', $meta_data );
+				update_post_meta( $post_id, '_fl_builder_draft', $meta_data );
 			}
 
 			/**
@@ -249,8 +372,8 @@ class Update_Posts {
 				$post_updated = $wpdb->update(
 					$wpdb->posts,
 					array(
-						'post_content' => $post_content,
-						'post_modified' => $date,
+						'post_content'      => $post_content,
+						'post_modified'     => $date,
 						'post_modified_gmt' => $date,
 					),
 					array( 'ID' => $post_id )
@@ -263,7 +386,6 @@ class Update_Posts {
 					wp_cache_delete( $post_id, 'posts' ); // Clear the object cache for the post
 					clean_post_cache( $post_id ); // Additional function to clear all caches related to the post
 				}
-
 			}
 
 			/**
@@ -283,12 +405,10 @@ class Update_Posts {
 				 * request @server
 				 * $msg = 'Failed to update post ' . $post_id;
 				 */
-				echo wp_json_encode(
-					array(
-						'status' => 'error',
-						'title' => 'Failed to update!',
-						'msg' => esc_html( $post_title ),
-					)
+				return array(
+					'status' => 'error',
+					'title'  => 'Failed to update!',
+					'msg'    => esc_html( $post_title ),
 				);
 
 			} else {
@@ -308,12 +428,12 @@ class Update_Posts {
 				 * You can add further actions if needed
 				 * $post_id
 				 */
-				echo wp_json_encode(
-					array(
-						'status' => 'success',
-						'title' => 'Post updated.',
-						'msg' => esc_html( $post_title ),
-					)
+				return array(
+					'status'   => 'success',
+					'title'    => 'Post updated.',
+					'msg'      => esc_html( $post_title ),
+					'post_id'  => $post_id,
+					'post_url' => get_permalink( $post_id ),
 				);
 
 				/**
@@ -337,12 +457,12 @@ class Update_Posts {
 	 * PATCH /api/plugin/sync : BODY - { posts: [{id: "post_id"}, {id: "post_id"}] }
 	 */
 	public static function send_updated_posts_ids( $updated_posts ) {
-		$api_url = SEMANTIC_LB_POSTS_SYNC_URL;
+		$api_url      = SEMANTIC_LB_POSTS_SYNC_URL;
 		$access_token = Auth::get_access_token();
 
 		$headers = array(
-			'Content-Type' => 'application/json',
-			'Authorization' => "Bearer $access_token",
+			'Content-Type'     => 'application/json',
+			'Authorization'    => "Bearer $access_token",
 			'X-PLUGIN-VERSION' => SEMANTIC_LB_VERSION,
 		);
 
@@ -352,8 +472,8 @@ class Update_Posts {
 
 		$arg = array(
 			'headers' => $headers,
-			'body' => wp_json_encode( $body, true ),
-			'method' => 'PATCH',
+			'body'    => wp_json_encode( $body, true ),
+			'method'  => 'PATCH',
 		);
 
 		$res = wp_remote_request( $api_url, $arg );

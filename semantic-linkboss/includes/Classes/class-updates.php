@@ -4,7 +4,7 @@
  * Update or Send data to Sync Batch Table
  *
  * @package SEMANTIC_LB
- * @since 0.0.0
+ * @since 1.0.0
  */
 
 namespace SEMANTIC_LB\Classes;
@@ -18,7 +18,7 @@ use SEMANTIC_LB\Traits\Global_Functions;
 /**
  * Description of Updates
  *
- * @since 0.0.0
+ * @since 1.0.0
  */
 class Updates {
 
@@ -28,7 +28,7 @@ class Updates {
 	/**
 	 * Construct
 	 *
-	 * @since 0.0.0
+	 * @since 1.0.0
 	 */
 	public function __construct() {
 		add_action( 'delete_post', array( $this, 'delete_sync_require' ) );
@@ -57,7 +57,7 @@ class Updates {
 	/**
 	 * Send WordPress Posts as JSON
 	 *
-	 * @since 0.0.0
+	 * @since 1.0.0
 	 */
 	public function data_sync_require( $post_id ) {
 
@@ -91,7 +91,7 @@ class Updates {
 		 * Prevent from other post types
 		 */
 
-		if( ! in_array( $post_type, $post_type_db ) ) {
+		if ( ! in_array( $post_type, $post_type_db ) ) {
 			return;
 		}
 
@@ -145,10 +145,10 @@ class Updates {
 	/**
 	 * Get Instance
 	 *
-	 * @since 0.0.0
+	 * @since 1.0.0
 	 */
 	public static function get_instance() {
-		if ( ! isset ( self::$instance ) ) {
+		if ( ! isset( self::$instance ) ) {
 			self::$instance = new self();
 		}
 

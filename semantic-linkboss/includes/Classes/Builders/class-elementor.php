@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-use SEMANTIC_LB\Classes\Posts;
+use SEMANTIC_LB\Classes\Sync_Posts;
 use SEMANTIC_LB\Classes\Updates;
 
 class Elementor {
@@ -43,7 +43,7 @@ class Elementor {
 
 			Updates::update_sync_batch_table( $post_id, $post_type, $post_status );
 
-			Posts::sync_posts_by_cron_and_hook();
+			Sync_Posts::sync_posts_by_cron_and_hook();
 
 		endif;
 	}

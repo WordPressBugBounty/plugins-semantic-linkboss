@@ -3,7 +3,7 @@
  * Trait Global Functions
  *
  * @package SEMANTIC_LB
- * @since 0.0.0
+ * @since 1.0.0
  */
 
 namespace SEMANTIC_LB\Traits;
@@ -15,58 +15,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 use SEMANTIC_LB\Classes\Auth;
 
 /**
- * Description of Global Functions
+ * Global Functions
  *
- * @since 0.0.0
+ * @since 1.0.0
  */
 trait Global_Functions {
 
 	/**
-	 * Fetch Reports from the server
-	 *
-	 * @since 0.0.0
-	 */
-	public function fetch_reports() {
-		$api_url = SEMANTIC_LB_FETCH_REPORT_URL;
-		$access_token = Auth::get_access_token();
-
-		if ( ! $access_token ) {
-			return Auth::get_tokens_by_auth_code();
-		}
-
-		$linkboss_reports = get_option( 'linkboss_reports', false );
-
-		if ( ! empty( $linkboss_reports ) ) {
-			return;
-		}
-
-		if ( empty( $access_token ) ) {
-			return;
-		}
-
-		$headers = array(
-			'Content-Type' => 'application/json',
-			'Authorization' => "Bearer $access_token",
-		);
-
-		$arg = array(
-			'headers' => $headers,
-		);
-
-		$response = wp_remote_get( $api_url, $arg );
-		$res_body = json_decode( wp_remote_retrieve_body( $response ), true );
-
-		if ( empty( $res_body ) ) {
-			return;
-		}
-
-		update_option( 'linkboss_reports', $res_body );
-
-	}
-
-	/**
 	 * Get Post & Pages
-	 * 
+	 *
 	 * @since 2.3.0
 	 */
 	public function get_post_pages( $_post_type = false, $post__in = false, $number_posts = -1, $post_status = array( 'publish' ) ) {
@@ -81,12 +38,12 @@ trait Global_Functions {
 
 		$__post_type = $post_type;
 		// remove 'page' from the array
-		if(false === $_post_type){
-			$__post_type = array_diff( $post_type, [ 'page' ] );
+		if ( false === $_post_type ) {
+			$__post_type = array_diff( $post_type, array( 'page' ) );
 		}
 
-		if( 'page' === $_post_type ){
-			$__post_type = array_diff( $post_type, [ 'page' ] );
+		if ( 'page' === $_post_type ) {
+			$__post_type = array_diff( $post_type, array( 'page' ) );
 		}
 
 		$posts_args = array(
@@ -130,11 +87,11 @@ trait Global_Functions {
 			/**
 			 * This is for class-ajax-init.php
 			 */
-			$page_args = [ 
+			$page_args = array(
 				'post_type' => 'page',
 				'posts_per_page' => $number_posts,
 				'post_status' => $post_status,
-			];
+			);
 			if ( false !== $post__in ) {
 				$page_args['post__in'] = is_array( $post__in ) ? $post__in : array( $post__in );
 			}
@@ -149,21 +106,19 @@ trait Global_Functions {
 		 * Will be used everywhere except class-ajax-init.php
 		 */
 		if ( false === $_post_type ) {
-			$page_args = [ 
+			$page_args = array(
 				'post_type' => 'page',
 				'posts_per_page' => $number_posts,
 				'post_status' => $post_status,
-			];
+			);
 
 			if ( false !== $post__in ) {
 				$page_args['post__in'] = is_array( $post__in ) ? $post__in : array( $post__in );
 			}
 
-			if( false === $page_yes ){
+			if ( false === $page_yes ) {
 				$pages = get_posts( $page_args );
 			}
-			
-
 		}
 
 		/**
@@ -207,7 +162,7 @@ trait Global_Functions {
 		/**
 		 * Remove 'page' from the array
 		 */
-		$post_type = array_diff( $post_type, [ 'page' ] );
+		$post_type = array_diff( $post_type, array( 'page' ) );
 
 		/**
 		 * Add categories to the query if available
@@ -237,9 +192,13 @@ trait Global_Functions {
 			);
 		}
 
-		$total_count = array_reduce( $post_counts, function ($carry, $counts) {
-			return $carry + $counts['total'];
-		}, 0 );
+		$total_count = array_reduce(
+			$post_counts,
+			function ($carry, $counts) {
+				return $carry + $counts['total'];
+			},
+			0
+		);
 
 		// Now $total_count holds the total number of posts across the specified post types and statuses, filtered by categories if specified
 

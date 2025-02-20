@@ -2,11 +2,11 @@
 Contributors: zventures, bdkoder, ahmdsabbir, prapon
 Donate link: https://linkboss.io/donate
 Tags: SEO, links, internal links, automation, linkboss
-Requires at least: 5.2
-Tested up to: 6.7.1
+Requires at least: 5.6
+Tested up to: 6.7.2
 Requires PHP: 7.4
-Stable tag: 2.6.4
-License: GPLv2 or later
+Stable tag: 2.7.0
+License: GPLv3 or later
 License URI: https://opensource.org/licenses/GPL-3.0
 
 NLP, AI, and Machine Learning-powered semantic interlinking tool. Manual interlinking, bulk interlinking in one click – it does it all.
@@ -68,14 +68,17 @@ Yes, interlinks created by LinkBoss will remain on your site even if you deactiv
 == Screenshots ==
 
 1. **Dashboard** - Overview of your internal linking performance.
-2. **Settings** - Customize your linking rules and preferences.
-3. **Reports** - Detailed analytics and reports on your internal links.
+2. **Sync** - Customize your linking rules and preferences.
+3. **Settings** - Customize your linking rules and preferences.
+4. **Reports** - Detailed analytics and reports on your internal links.
 
 == Changelog ==
 
-= 2.6.4 [20th January 2025] =
+= 2.7.0 [21th February 2025] =
 
-Improved: System Improved
+Added: Completely redesigned UI interface
+Added: WPML Support added
+Improved: System-wide enhancements for better performance
 
 = 2.6.3 [29th November 2024] =
 

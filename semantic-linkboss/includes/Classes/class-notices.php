@@ -13,6 +13,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use WP_REST_Controller;
+use WP_REST_Server;
+use WP_REST_Request;
+use WP_REST_Response;
+use WP_Error;
+
 use SEMANTIC_LB\Classes\Auth;
 
 /**
@@ -23,13 +29,125 @@ use SEMANTIC_LB\Classes\Auth;
 class Notices {
 
 	/**
+	 * Namespace
+	 *
+	 * @var string
+	 */
+	protected $namespace;
+
+	/**
+	 * Rest Base
+	 *
+	 * @var string
+	 */
+
+	protected $rest_base;
+
+	/**
 	 * Construct
 	 *
 	 * @since 2.1.0
 	 */
 	public function __construct() {
 		add_action( 'admin_notices', array( $this, 'show_notices' ) );
-		add_action( 'wp_ajax_lbw_notices_dismiss', array( $this, 'notices_dismiss' ) );
+
+		$this->namespace = 'linkboss/v1';
+		$this->rest_base = 'notices';
+		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+	}
+
+	/**
+	 * Register the routes
+	 *
+	 * @since 2.7.0
+	 */
+	public function register_rest_routes() {
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base,
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'handle_request' ),
+				// 'permission_callback' => array( $this, 'get_permissions_check' ),
+				'permission_callback' => '__return_true',
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base,
+			array(
+				'methods'             => WP_REST_Server::EDITABLE,
+				'callback'            => array( $this, 'handle_request' ),
+				'permission_callback' => array( $this, 'update_permissions_check' ),
+			)
+		);
+	}
+
+	/**
+	 * Check the permissions for getting the settings
+	 *
+	 * @since 2.7.0
+	 */
+	public function get_permissions_check() {
+		return current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Check the permissions for updating the settings
+	 *
+	 * @since 2.7.0
+	 */
+	public function update_permissions_check() {
+		return current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Handle Request
+	 *
+	 * @since 2.7.0
+	 */
+	public function handle_request( WP_REST_Request $request ) {
+		$params = $request->get_params();
+
+		$action = isset( $params['action'] ) ? $params['action'] : false;
+
+		if ( $action ) {
+			return $this->notices_dismiss();
+		}
+
+		return rest_ensure_response(
+			array(
+				'status'  => 'success',
+				'message' => 'Init Reports fetched successfully',
+				'data'    => array(
+					'notices' => $this->get_notices( $params ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Get Notices
+	 *
+	 * @since 2.7.0
+	 */
+	public function get_notices( $params ) {
+		$notices = array();
+
+		if ( defined( 'DISABLE_WP_CRON' ) ) {
+			$dismissed = get_option( 'lbw_cron_notice_dismissed', false );
+			if ( $dismissed ) {
+				return;
+			}
+			$notices[] = array(
+				'type'    => 'warning',
+				'message' => esc_html__( 'LinkBoss functionality may not work due to the deactivation of WordPress Cron. Please enable it to sync posts. ( Ignore/Close Notice if you use server cron )', 'semantic-linkboss' ),
+			);
+		}
+
+		return $notices;
 	}
 
 	/**
@@ -39,32 +157,18 @@ class Notices {
 	 * @return void
 	 */
 	public function show_notices() {
-		if ( get_option( 'linkboss_api_key' ) == '' ) {
+		if ( '' === get_option( 'linkboss_api_key' ) ) {
 			$this->show_notice(
 				'error',
-				esc_html__( 'LinkBoss API Key is not set. Please set it from ', 'semantic-linkboss' ) . '<a href="' . admin_url( 'admin.php?page=linkboss-settings' ) . '">' . esc_html__( 'here', 'semantic-linkboss' ) . '</a>.'
+				esc_html__( 'LinkBoss API Key is not set. Please connect your WordPress site with LinkBoss app by adding the API key from ', 'semantic-linkboss' ) . '<a href="' . admin_url( 'admin.php?page=semantic-linkboss' ) . '">' . esc_html__( 'Settings Tab', 'semantic-linkboss' ) . '</a>.'
 			);
 		}
 		if ( ! Auth::get_access_token() ) {
 			$this->show_notice(
 				'error',
-				esc_html__( 'LinkBoss Access Token is not found. Please save the settings from ', 'semantic-linkboss' ) . '<a href="' . admin_url( 'admin.php?page=linkboss-settings' ) . '">' . esc_html__( 'here', 'semantic-linkboss' ) . '</a>.'
+				esc_html__( 'LinkBoss Access Token is not found. Please connect your WordPress site with LinkBoss app by adding the API key from ', 'semantic-linkboss' ) . '<a href="' . admin_url( 'admin.php?page=semantic-linkboss' ) . '">' . esc_html__( 'Settings Tab', 'semantic-linkboss' ) . '</a>.'
 			);
 		}
-
-		if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) {
-			$dismissed = get_option( 'lbw_cron_notice_dismissed', false );
-			if ( $dismissed ) {
-				return;
-			}
-			$this->show_notice(
-				'warning',
-				esc_html__( 'LinkBoss functionality is currently disabled due to the deactivation of WordPress Cron. Please enable it to sync posts.', 'semantic-linkboss' ),
-				'lbw-cron-notice'
-			);
-
-		}
-
 	}
 
 	/**
@@ -89,24 +193,13 @@ class Notices {
 	 * Dismiss Notice.
 	 */
 	public function notices_dismiss() {
-		$nonce = isset( $_POST['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ) : '';
-		$notice = isset( $_POST['notice'] ) ? sanitize_text_field( wp_unslash( $_POST['notice'] ) ) : '';
-
-		if ( ! wp_verify_nonce( $nonce, 'linkboss_nonce' ) ) {
-			wp_send_json_error();
-		}
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error();
-		}
-
-		if ( 'cron_dismissed' === $notice ) {
-			update_option( 'lbw_cron_notice_dismissed', true);
-			wp_send_json_success();
-		}
-
-		wp_send_json_error();
-
+		update_option( 'lbw_cron_notice_dismissed', true );
+		return rest_ensure_response(
+			array(
+				'status'  => 'success',
+				'message' => 'Notice dismissed successfully',
+			)
+		);
 	}
 }
 

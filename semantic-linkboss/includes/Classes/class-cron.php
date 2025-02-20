@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 use SEMANTIC_LB\Classes\Auth;
 use SEMANTIC_LB\Classes\Updates;
 use SEMANTIC_LB\Classes\Update_Posts;
-use SEMANTIC_LB\Classes\Posts;
+use SEMANTIC_LB\Classes\Sync_Posts;
 use SEMANTIC_LB\Classes\Init;
 
 /**
@@ -74,7 +74,7 @@ class Cron {
 		 *
 		 * @since 0.1.0
 		 */
-		$this->create_cron_job( 'linkboss_init_table_ids_for_batch', 2 * HOUR_IN_SECONDS, 'init_table_ids_for_batch' );
+		$this->create_cron_job( 'linkboss_init_posts_ids_batch', 2 * HOUR_IN_SECONDS, 'init_posts_ids_batch' );
 
 		/**
 		 * Sync Posts to LinkBoss on Post Draft Manually
@@ -99,11 +99,11 @@ class Cron {
 
 		/**
 		 * Get data of Custom Query Builder
-		 * 
+		 *
 		 * @since 2.3.0
 		 */
 		$query_data = get_option( 'linkboss_custom_query', '' );
-		$post_type = isset( $query_data['post_sources'] ) && ! empty( $query_data['post_sources'] ) ? $query_data['post_sources'] : array( 'post', 'page' );
+		$post_type  = isset( $query_data['post_sources'] ) && ! empty( $query_data['post_sources'] ) ? $query_data['post_sources'] : array( 'post', 'page' );
 
 		/**
 		 * If custom post types are specified, ensure 'post' and 'page' are included if they are in the custom query
@@ -120,7 +120,7 @@ class Cron {
 
 		/**
 		 * Add custom post types to hook if specified
-		 * 
+		 *
 		 * @since 2.3.0
 		 */
 		if ( ! empty( $post_type ) ) {
@@ -142,7 +142,6 @@ class Cron {
 		}
 
 		add_action( 'save_post', array( $this, 'post_update_save_trigger' ), 10, 3 );
-
 	}
 
 
@@ -153,12 +152,12 @@ class Cron {
 		}
 
 		// Skip revisions and auto-draft posts.
-		if ( wp_is_post_revision( $post_id ) || $post->post_status === 'auto-draft' ) {
+		if ( wp_is_post_revision( $post_id ) || 'auto-draft' === $post->post_status ) {
 			return;
 		}
 
 		// Skip if the post is not published.
-		if ( $post->post_status !== 'publish' ) {
+		if ( 'publish' !== $post->post_status ) {
 			return;
 		}
 
@@ -166,7 +165,7 @@ class Cron {
 		if ( self::is_elementor_post( $post_id ) ) {
 			return;
 		}
-		
+
 		// Perform your custom logic after save/publish.
 		$this->sync_posts_on_post_update( $post_id );
 	}
@@ -175,20 +174,25 @@ class Cron {
 	 * Create a custom cron job
 	 *
 	 * @param string $hook The unique hook name for this job.
-	 * @param int $interval The interval in seconds.
+	 * @param int    $interval The interval in seconds.
 	 * @param string $callback The name of the callback method.
 	 */
 	public function create_cron_job( $hook, $interval, $callback ) {
 		/**
 		 * Add a filter for custom schedule with the provided interval and $hook
 		 */
-		add_filter( 'cron_schedules', function ($schedules) use ($hook, $interval) {
-			$schedules[ $hook ] = array(
-				'interval' => $interval,
-				'display' => esc_html__( 'Custom Schedule', 'semantic-linkboss' ),
-			);
-			return $schedules;
-		}, 10, 1 );
+		add_filter(
+			'cron_schedules',
+			function ( $schedules ) use ( $hook, $interval ) {
+				$schedules[ $hook ] = array(
+					'interval' => $interval,
+					'display'  => esc_html__( 'Custom Schedule', 'semantic-linkboss' ),
+				);
+				return $schedules;
+			},
+			10,
+			1
+		);
 
 		if ( ! wp_next_scheduled( $hook ) ) {
 			/**
@@ -204,13 +208,13 @@ class Cron {
 	 * Add a custom schedule
 	 *
 	 * @param array $schedules The existing schedules.
-	 * @param int $interval The interval in seconds.
+	 * @param int   $interval The interval in seconds.
 	 * @return array The modified schedules.
 	 */
 	public function add_custom_schedule( $schedules ) {
 		$schedules['custom'] = array(
 			'interval' => 60, // Change the interval as needed
-			'display' => __( 'Custom Schedule', 'semantic-linkboss' ),
+			'display'  => __( 'Custom Schedule', 'semantic-linkboss' ),
 		);
 
 		return $schedules;
@@ -238,11 +242,11 @@ class Cron {
 	 * @since 0.0.6
 	 */
 	public static function sync_posts_on_post_update( $post_id ) {
-		
+
 		$updates_obj = new Updates();
 		$updates_obj->data_sync_require( $post_id );
 
-		Posts::sync_posts_by_cron_and_hook();
+		Sync_Posts::sync_posts_by_cron_and_hook();
 	}
 
 	/**
@@ -286,7 +290,7 @@ class Cron {
 	 * @since 0.0.5
 	 */
 	public static function sync_posts() {
-		Posts::sync_posts_by_cron_and_hook();
+		Sync_Posts::sync_posts_by_cron_and_hook();
 	}
 
 	/**
@@ -308,8 +312,8 @@ class Cron {
 	 *
 	 * @since 0.1.0
 	 */
-	public static function init_table_ids_for_batch() {
-		Init::init_table_ids_for_batch( true );
+	public static function init_posts_ids_batch() {
+		Init::init_posts_ids_batch( true );
 	}
 
 	/**
@@ -318,10 +322,9 @@ class Cron {
 	 * @since 0.1.0
 	 */
 	public static function ready_batch_for_process() {
-		Posts::cron_ready_batch_for_process();
-		Posts::sync_posts_by_cron_and_hook();
+		Sync_Posts::cron_ready_batch_for_process();
+		Sync_Posts::sync_posts_by_cron_and_hook();
 	}
-
 }
 
 if ( class_exists( 'SEMANTIC_LB\Classes\Cron' ) ) {

@@ -2,7 +2,7 @@
 
 /**
  * Installer class
- * 
+ *
  * @package SEMANTIC_LB
  * @since 0.0.5
  */
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Installer of Menu
- * 
+ *
  * @since 0.0.5
  */
 class Installer {
@@ -44,7 +44,6 @@ class Installer {
 			// phpcs:ignore
 			$wpdb->query( $wpdb->prepare( "DROP TABLE IF EXISTS %s", $table_name ) );
 		}
-
 	}
 
 	/**
@@ -95,14 +94,13 @@ class Installer {
 
 		/**
 		 * status column type change to VARCHAR(1) from TINYINT(1) and also change the name to sent_status
-		 * 
+		 *
 		 * @since 2.2.0
 		 */
 
 		$table_schema = esc_sql( DB_NAME );
 		// phpcs:ignore
-		$column = $wpdb->get_results( $wpdb->prepare(
-			"SELECT * FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s",
+		$column = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s",
 			$table_schema,
 			$wpdb->prefix . 'linkboss_sync_batch',
 			'status'
@@ -114,14 +112,13 @@ class Installer {
 
 		}
 
-
 		if ( ! function_exists( 'dbDelta' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		}
 
 		$result = dbDelta( $schema_sync_batch );
 
-		if ( $result === false ) {
+		if ( false === $result ) {
 			set_transient( 'linkboss_sync_batch_table_error', 'Failed to create sync batch table', 7 * DAY_IN_SECONDS );
 		}
 	}
