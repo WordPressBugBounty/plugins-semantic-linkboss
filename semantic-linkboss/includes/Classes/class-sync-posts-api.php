@@ -150,7 +150,7 @@ class Sync_Posts_Api extends Sync_Posts {
 		update_option( 'linkboss_sync_batch', $batches );
 
 		return $batches;
-		/**
+		/*
 		return rest_ensure_response(
 			array(
 				'status' => 'success',
@@ -192,8 +192,7 @@ class Sync_Posts_Api extends Sync_Posts {
 			array(
 				'status' => 'success',
 				'data'   => $response,
-			),
-			200
+			)
 		);
 	}
 
@@ -256,24 +255,10 @@ class Sync_Posts_Api extends Sync_Posts {
 			$categories
 		);
 
-		$response = $this->send_group( $categories_data, '', true );
+		self::$show_msg = true;
+		$response       = $this->send_group( $categories_data, '', true );
 
-		if ( 200 === $response['status'] ) {
-			echo wp_json_encode(
-				array(
-					'status' => 'success',
-				),
-				true
-			);
-		} else {
-			echo wp_json_encode(
-				array(
-					'status' => 'error',
-				),
-				true
-			);
-		}
-		wp_die();
+		return $response;
 	}
 
 	/**
@@ -354,6 +339,21 @@ class Sync_Posts_Api extends Sync_Posts {
 	 * @since 2.2.0
 	 */
 	public function sync_finish() {
+		/**
+		 * Request Categories Sync
+		 */
+		$categories_res = $this->ready_wp_categories_for_sync();
+
+		if ( 200 !== $categories_res['status'] && 201 !== $categories_res['status'] ) {
+			return rest_ensure_response(
+				array(
+					'status' => 'error',
+					'title'  => esc_html( 'Error - ' . $categories_res['status'] ),
+					'msg'    => esc_html( $categories_res['msg'] ),
+				)
+			);
+		}
+
 		$api_url      = SEMANTIC_LB_SYNC_FINISH;
 		$access_token = Auth::get_access_token();
 

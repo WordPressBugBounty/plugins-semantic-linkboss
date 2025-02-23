@@ -410,14 +410,14 @@ class Sync_Posts {
 				}
 
 				/**
-         * Handle WPML & Polylang Permalinks
-         */
+			* Handle WPML & Polylang Permalinks
+			*/
 				$post_url = get_permalink( $post->ID );
 
 				if ( function_exists( 'icl_object_id' ) ) {
 					// WPML: Get language code and correct permalink
 					$language_code = apply_filters( 'wpml_post_language_details', null, $post->ID )['language_code'];
-					$post_url   = apply_filters( 'wpml_permalink', get_permalink( $post->ID ), $language_code );
+					$post_url      = apply_filters( 'wpml_permalink', get_permalink( $post->ID ), $language_code );
 				} elseif ( function_exists( 'pll_get_post' ) ) {
 					// Polylang: Get the translated post ID and its permalink
 					$lang               = pll_get_post_language( $post->ID );

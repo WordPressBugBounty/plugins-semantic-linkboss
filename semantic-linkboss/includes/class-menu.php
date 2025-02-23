@@ -38,7 +38,7 @@ class Menu {
 	public function admin_menu() {
 		$parent_slug = 'semantic-linkboss';
 		$capability  = 'manage_options';
-		add_menu_page( esc_html__( 'Linkboss', 'semantic-linkboss' ), esc_html__( 'Linkboss', 'semantic-linkboss' ), $capability, $parent_slug, array( $this, 'plugin_layout' ), $this->get_b64_icon(), 56 );
+		add_menu_page( esc_html__( 'LinkBoss', 'semantic-linkboss' ), esc_html__( 'LinkBoss', 'semantic-linkboss' ), $capability, $parent_slug, array( $this, 'plugin_layout' ), $this->get_b64_icon(), 56 );
 	}
 
 	/**
