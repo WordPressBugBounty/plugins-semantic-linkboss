@@ -141,12 +141,18 @@ class Update_Posts {
 		}
 
 		if ( empty( $res_body ) ) {
-			return new WP_Error( 'no_data', esc_html__( 'No data to Update', 'semantic-linkboss' ), array( 'status' => 200 ) );
+			return new WP_REST_Response(
+				array(
+					'status' => 'error',
+					'title'  => 'Oops!',
+					'msg'    => esc_html__( 'No data to Update', 'semantic-linkboss' ),
+				),
+				200
+			);
 		}
 
-		$res = self::update_posts( $res_body );
-
-		return new WP_REST_Response( $res );
+		$results = self::update_posts( $res_body );
+		return new WP_REST_Response( $results, 200 );
 	}
 
 	/**
@@ -276,16 +282,20 @@ class Update_Posts {
 	 * Server Response to Update Posts
 	 */
 	public static function update_posts( $data ) {
-
 		/**
 		 * Store the post IDs that were updated successfully
 		 * id: "post_id"
 		 */
 		$updated_posts = array();
+		$results       = array(); // Store results for all posts
 
-		// Assuming $data is the array containing post data
+		/**
+		 * Assuming $data is the array containing post data
+		 */
 		foreach ( $data as $post_data ) {
-			// Prepare the post data for updating
+			/**
+			 * Prepare the post data for updating
+			 */
 			$post_id       = $post_data['_postId'];
 			$post_content  = isset( $post_data['content'] ) && ! empty( $post_data['content'] ) ? $post_data['content'] : '';
 			$post_modified = $post_data['updatedAt'];
@@ -300,65 +310,45 @@ class Update_Posts {
 			 * Solved by @sabbir
 			 */
 			if ( isset( $post_data['builder'] ) && 'elementor' === $post_data['builder'] && isset( $post_data['meta'] ) ) {
-				// Use wp_json_encode to properly encode the JSON data
 				$encoded_meta = addslashes( wp_json_encode( $post_data['meta'] ) );
-				// Update the post meta with properly encoded JSON
 				update_post_meta( $post_id, '_elementor_data', $encoded_meta );
 			}
 
 			/**
-			 * Update the Bricks
-			 *
-			 * @since 2.5.0
-			 */
+					* Update the Bricks
+					*
+					* @since 2.5.0
+					*/
 			if ( isset( $post_data['builder'] ) && 'bricks' === $post_data['builder'] && isset( $post_data['meta'] ) ) {
 				update_post_meta( $post_id, '_bricks_page_content_2', wp_slash( $post_data['meta'] ) );
 			}
 
 			/**
-			 * Update the Oxygen
-			 *
-			 * @since 2.5.0
-			 */
+					* Update the Oxygen
+					*
+					* @since 2.5.0
+					*/
 			if ( isset( $post_data['builder'] ) && 'oxygen' === $post_data['builder'] && isset( $post_data['meta'] ) ) {
-				/**
-				 * Check if data is array & Old Oxygen version
-				 */
 				$meta_exists = get_post_meta( $post_id, '_ct_builder_json', true );
 				$meta_value  = is_array( $post_data['meta'] ) ? wp_slash( wp_json_encode( $post_data['meta'] ) ) : $post_data['meta'];
 				$meta_key    = $meta_exists ? '_ct_builder_json' : 'ct_builder_json';
-
 				update_post_meta( $post_id, $meta_key, $meta_value );
 			}
 
 			/**
-			 * Update the Thrive Content Builder
-			 *
-			 * @since 2.5.0
-			 */
+					* Update the Thrive Content Builder
+					*
+					* @since 2.5.0
+					*/
 			if ( isset( $post_data['builder'] ) && 'thrive' === $post_data['builder'] && isset( $post_data['meta'] ) ) {
 				self::update_thrive_data( $post_id, $post_content );
 			}
 
-			/**
-			 * Update the Beaver meta
-			 *
-			 * @since 2.7.0
-			 */
-
 			if ( isset( $post_data['builder'] ) && 'beaver' === $post_data['builder'] && isset( $post_data['meta'] ) ) {
-
 				$meta_data = $post_data['meta'];
-				/**
-				 * Convert specific parts of the array to stdClass
-				 */
 				foreach ( $meta_data as $key => $value ) {
 					$meta_data[ $key ] = (object) $value;
 				}
-
-				/**
-				 * Serialize the array with objects and update post meta
-				 */
 				update_post_meta( $post_id, '_fl_builder_data', $meta_data );
 				update_post_meta( $post_id, '_fl_builder_draft', $meta_data );
 			}
@@ -368,7 +358,6 @@ class Update_Posts {
 			 */
 			if ( ! empty( $post_content ) ) {
 				global $wpdb;
-				// phpcs:ignore
 				$post_updated = $wpdb->update(
 					$wpdb->posts,
 					array(
@@ -380,37 +369,30 @@ class Update_Posts {
 				);
 
 				/**
-				 * Flush object cache for this post
-				 */
+						 * Flush object cache for this post
+						 */
 				if ( $post_updated ) {
-					wp_cache_delete( $post_id, 'posts' ); // Clear the object cache for the post
-					clean_post_cache( $post_id ); // Additional function to clear all caches related to the post
+					wp_cache_delete( $post_id, 'posts' );
+					clean_post_cache( $post_id );
 				}
 			}
 
 			/**
-			 * Get the post title
-			 */
+					* Get the post title
+					*/
 			$post_title = get_the_title( $post_id );
 			$post_title = mb_strimwidth( $post_title, 0, 100, '...' );
 
 			/**
-			 * Check if the post was updated successfully
-			 */
-			// if ( ! $post_updated ) {
+					* Check if the post was updated successfully
+					*/
 			if ( is_wp_error( $post_updated ) ) {
-				/**
-				 * Handle any errors if needed
-				 * Need to trigger socket fire event
-				 * request @server
-				 * $msg = 'Failed to update post ' . $post_id;
-				 */
-				return array(
-					'status' => 'error',
-					'title'  => 'Failed to update!',
-					'msg'    => esc_html( $post_title ),
+				$results[] = array(
+					'status'  => 'error',
+					'title'   => 'Failed to update!',
+					'msg'     => esc_html( $post_title ),
+					'post_id' => $post_id,
 				);
-
 			} else {
 				/*
 				 * Post updated successfully
@@ -423,35 +405,25 @@ class Update_Posts {
 				 * Store the post ID in the array
 				 */
 				array_push( $updated_posts, array( 'post_id' => $post_id ) );
-
-				/**
-				 * You can add further actions if needed
-				 * $post_id
-				 */
-				return array(
+				$results[] = array(
 					'status'   => 'success',
 					'title'    => 'Post updated.',
 					'msg'      => esc_html( $post_title ),
 					'post_id'  => $post_id,
 					'post_url' => get_permalink( $post_id ),
 				);
-
-				/**
-				 * Need to trigger socket fire event = working
-				 * request @server
-				 */
-
-				/**
-				 * Send updated Post IDs to LinkBoss
-				 */
-				if ( ! empty( $updated_posts ) ) {
-					self::send_updated_posts_ids( $updated_posts );
-				}
 			}
 		}
-		wp_die();
-	}
 
+		/**
+				 * Send updated Post IDs to LinkBoss
+				 */
+		if ( ! empty( $updated_posts ) ) {
+			self::send_updated_posts_ids( $updated_posts );
+		}
+
+		return $results; // Return results for all posts
+	}
 	/**
 	 * Send updated Post IDs to LinkBoss
 	 * PATCH /api/plugin/sync : BODY - { posts: [{id: "post_id"}, {id: "post_id"}] }

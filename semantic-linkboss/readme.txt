@@ -5,7 +5,7 @@ Tags: SEO, links, internal links, automation, linkboss
 Requires at least: 5.6
 Tested up to: 6.7.2
 Requires PHP: 7.4
-Stable tag: 2.7.1
+Stable tag: 2.7.2
 License: GPLv3 or later
 License URI: https://opensource.org/licenses/GPL-3.0
 
@@ -73,6 +73,10 @@ Yes, interlinks created by LinkBoss will remain on your site even if you deactiv
 4. **Reports** - Detailed analytics and reports on your internal links.
 
 == Changelog ==
+
+= 2.7.2 [25th February 2025] =
+
+Fixed: Post update issue fixed (Patch request in Socket)
 
 = 2.7.1 [23th February 2025] =
 
