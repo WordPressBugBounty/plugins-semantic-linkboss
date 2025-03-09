@@ -89,7 +89,7 @@ class Settings {
 			$this->namespace,
 			'/' . $this->rest_base,
 			array(
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => WP_REST_Server::EDITABLE,
 				'callback'            => array( $this, 'get_settings' ),
 				'permission_callback' => array( $this, 'get_permissions_check' ),
 			)
@@ -97,7 +97,7 @@ class Settings {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base,
+			'/' . $this->rest_base . '/update',
 			array(
 				'methods'             => WP_REST_Server::EDITABLE,
 				'callback'            => array( $this, 'set_settings' ),

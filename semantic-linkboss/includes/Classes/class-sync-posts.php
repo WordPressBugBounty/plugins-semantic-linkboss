@@ -109,7 +109,9 @@ class Sync_Posts {
 		}
 
 		// phpcs:ignore
-		$query = $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}linkboss_sync_batch WHERE sent_status IS NULL && post_status = 'publish' OR post_status = 'trash' ORDER BY post_id ASC" );
+		// $query = $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}linkboss_sync_batch WHERE sent_status IS NULL && post_status = 'publish' OR post_status = 'trash' ORDER BY post_id ASC" );
+    // phpcs:ignore
+    $query = "SELECT * FROM {$wpdb->prefix}linkboss_sync_batch WHERE sent_status IS NULL && post_status = 'publish' OR post_status = 'trash' ORDER BY post_id ASC";
 		// phpcs:ignore
 		$results = $wpdb->get_results( $query );
 
@@ -272,6 +274,8 @@ class Sync_Posts {
 								'&#34;',
 								'&#36;',
 								'&#39;',
+								'“',
+								'”',
 							),
 							array(
 								'–',
@@ -285,6 +289,8 @@ class Sync_Posts {
 								'"',
 								'$',
 								"'",
+								'"',
+								'"',
 							),
 							$rendered_content
 						);

@@ -67,22 +67,12 @@ class Dashboard {
 			$this->namespace,
 			'/' . $this->rest_base,
 			array(
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => WP_REST_Server::EDITABLE,
 				'callback'            => array( $this, 'handle_dashboard' ),
-				// 'permission_callback' => array( $this, 'get_permissions_check' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( $this, 'permissions_check' ),
 			)
 		);
 
-		// register_rest_route(
-		// $this->namespace,
-		// '/' . $this->rest_base,
-		// array(
-		// 'methods'             => WP_REST_Server::EDITABLE,
-		// 'callback'            => array( $this, 'set_dashboard' ),
-		// 'permission_callback' => array( $this, 'update_permissions_check' ),
-		// )
-		// );
 	}
 
 	/**
@@ -90,16 +80,7 @@ class Dashboard {
 	 *
 	 * @since 2.7.0
 	 */
-	public function get_permissions_check() {
-		return current_user_can( 'manage_options' );
-	}
-
-	/**
-	 * Check the permissions for updating the settings
-	 *
-	 * @since 2.7.0
-	 */
-	public function update_permissions_check() {
+	public function permissions_check() {
 		return current_user_can( 'manage_options' );
 	}
 

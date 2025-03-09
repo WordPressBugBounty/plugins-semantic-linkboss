@@ -67,17 +67,6 @@ class Notices {
 			$this->namespace,
 			'/' . $this->rest_base,
 			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'handle_request' ),
-				// 'permission_callback' => array( $this, 'get_permissions_check' ),
-				'permission_callback' => '__return_true',
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->rest_base,
-			array(
 				'methods'             => WP_REST_Server::EDITABLE,
 				'callback'            => array( $this, 'handle_request' ),
 				'permission_callback' => array( $this, 'update_permissions_check' ),

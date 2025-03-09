@@ -80,9 +80,9 @@ class Update_Posts {
 			$this->namespace,
 			'/' . $this->rest_base,
 			array(
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => WP_REST_Server::EDITABLE,
 				'callback'            => array( $this, 'get_update_posts_socket' ),
-				'permission_callback' => array( $this, 'get_permissions_check' ),
+				'permission_callback' => array( $this, 'permissions_check' ),
 			)
 		);
 	}
@@ -92,7 +92,7 @@ class Update_Posts {
 	 *
 	 * @since 2.7.0
 	 */
-	public function get_permissions_check() {
+	public function permissions_check() {
 		return current_user_can( 'manage_options' );
 	}
 

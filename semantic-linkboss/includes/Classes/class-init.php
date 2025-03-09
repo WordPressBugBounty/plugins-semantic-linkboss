@@ -82,7 +82,7 @@ class Init {
 			$this->namespace,
 			'/' . $this->rest_base,
 			array(
-				'methods' => WP_REST_Server::READABLE,
+				'methods' => WP_REST_Server::EDITABLE,
 				'callback' => array( $this, 'get_init' ),
 				'permission_callback' => array( $this, 'get_permissions_check' ),
 			)
@@ -90,7 +90,7 @@ class Init {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base,
+			'/' . $this->rest_base . '/set',
 			array(
 				'methods' => WP_REST_Server::EDITABLE,
 				'callback' => array( $this, 'set_init' ),
@@ -169,7 +169,7 @@ class Init {
 					return rest_ensure_response(
 						array(
 							'status' => 'success',
-							'message' => 'Posts Batch Synced successfully',
+							'message' => 'The contents are prepared, please press the Sync button below.',
 						),
 						200
 					);
@@ -177,7 +177,7 @@ class Init {
 					return rest_ensure_response(
 						array(
 							'status' => 'success',
-							'message' => 'Posts Batch Synced successfully',
+							'message' => 'The contents are prepared, please press the Sync button below.',
 							'has_post' => true,
 						),
 						200
