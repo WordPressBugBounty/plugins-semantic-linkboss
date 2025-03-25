@@ -214,13 +214,13 @@ class Update_Posts {
 
 		if ( empty( $res_body ) ) {
 
-			echo wp_json_encode(
-				array(
-					'status' => 'success',
-					'title'  => 'Success!',
-					'msg'    => esc_html__( 'No data to Update', 'semantic-linkboss' ),
-				)
-			);
+			// echo wp_json_encode(
+			//  array(
+			//      'status' => 'success',
+			//      'title'  => 'Success!',
+			//      'msg'    => esc_html__( 'No data to Update', 'semantic-linkboss' ),
+			//  )
+			// );
 			wp_die();
 		}
 

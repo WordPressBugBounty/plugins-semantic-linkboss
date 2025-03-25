@@ -382,9 +382,7 @@ class Settings {
 				$categories
 			);
 
-			return rest_ensure_response( $categories, 200 );
-		} else {
-			return new WP_Error( 'no_categories', esc_html__( 'Oops, Categories are not found.' ), array( 'status' => 404 ) );
+			return rest_ensure_response( $categories );
 		}
 	}
 

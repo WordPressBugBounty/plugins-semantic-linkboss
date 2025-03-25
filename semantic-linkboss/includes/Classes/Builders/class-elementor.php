@@ -47,7 +47,6 @@ class Elementor {
 
 		endif;
 	}
-
 }
 
 if ( class_exists( '\SEMANTIC_LB\Classes\Builders\Elementor' ) ) {

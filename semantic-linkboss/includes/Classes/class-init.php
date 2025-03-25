@@ -217,7 +217,7 @@ class Init {
 		 * Escape each item and wrap it in single quotes
 		 */
 		$post_type_query_escaped = array_map(
-			function ($type) {
+			function ( $type ) {
 				return "'" . esc_sql( $type ) . "'";
 			},
 			$post_type_query
@@ -493,101 +493,6 @@ class Init {
 		}
 
 		return $hierarchical_taxonomies;
-	}
-
-	/**
-	 * Init Wp_postmeta Table IDs
-	 *
-	 * RND Not used
-	 */
-	public static function init_postmeta_ids_batch() {
-		global $wpdb;
-		$table_name = $wpdb->prefix . 'linkboss_sync_batch';
-
-		/*
-			$sql = "SELECT DISTINCT pm.meta_id, pm.post_id, pm.meta_key, pm.meta_value
-					FROM {$wpdb->prefix}postmeta pm
-					LEFT JOIN {$wpdb->prefix}linkboss_sync_batch l ON pm.post_id = l.post_id
-					WHERE l.post_id IS NOT NULL
-					AND pm.meta_key IN ('_elementor_data')LIMIT 100";
-					*/
-
-		$sql = "SELECT DISTINCT pm.meta_id, pm.post_id, pm.meta_key, pm.meta_value
-					FROM {$wpdb->prefix}postmeta pm
-					LEFT JOIN {$wpdb->prefix}linkboss_sync_batch l ON pm.meta_id = l.post_id
-					WHERE l.meta_id IS NULL
-					AND pm.meta_key IN ('_elementor_data') LIMIT 100";
-
-		// phpcs:ignore
-		$posts = $wpdb->get_results( $sql, ARRAY_A );
-
-		/**
-		 * Split the data into batches of 200
-		 */
-		$batches = array_chunk( $posts, 200 );
-
-		$total_batches = count( $batches );
-		$current_batch = 0;
-
-		foreach ( $batches as $batch ) {
-			/**
-			 * Create the SQL query for inserting
-			 */
-			$insert_sql = "INSERT IGNORE INTO $table_name (post_id, meta_id, post_type, content_size) VALUES ";
-
-			/**
-			 * Use the array values to construct the query
-			 */
-			$values = array();
-
-			foreach ( $batch as $post ) {
-				$post_id = $post['post_id'];
-				$meta_id = $post['meta_id'];
-				$post_content = $post['meta_value'];
-				$content_size = mb_strlen( $post_content, '8bit' );
-
-				/**
-				 * Making a trick here to insert meta_id as post_id
-				 * Because we need to use post_id as unique key
-				 */
-				$values[] = "($meta_id, $post_id, 'meta', $content_size)";
-			}
-
-			/**
-			 * Combine the values and execute the query
-			 */
-			$insert_sql .= implode( ', ', $values );
-			// phpcs:ignore
-			$wpdb->query( $insert_sql );
-
-			/**
-			 * Update progress
-			 */
-			++$current_batch;
-		}
-
-		if ( $total_batches > 0 ) {
-			echo wp_json_encode(
-				array(
-					'status' => 'success',
-					'has_post' => true,
-					'post_type' => 'meta',
-					'msg' => esc_html__( 'Meta Batch Synced', 'semantic-linkboss' ),
-				),
-				true
-			);
-		} else {
-			echo wp_json_encode(
-				array(
-					'status' => 'success',
-					'has_post' => false,
-					'post_type' => 'meta',
-					'msg' => esc_html__( 'No new posts to sync', 'semantic-linkboss' ),
-				),
-				true
-			);
-		}
-		wp_die();
 	}
 }
 

@@ -3,7 +3,7 @@
  * Plugin Name: LinkBoss - Semantic Internal Linking
  * Plugin URI: https://linkboss.io
  * Description: NLP, AI, and Machine Learning-powered semantic interlinking tool. Supports manual incoming/outgoing, SILO, and bulk auto internal links.
- * Version: 2.7.3
+ * Version: 2.7.4
  * Requires at least: 5.6
  * Requires PHP: 7.4
  * Author: ZVENTURES LLC
@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SEMANTIC_LB_VERSION', '2.7.3' );
+define( 'SEMANTIC_LB_VERSION', '2.7.4' );
 define( 'SEMANTIC_LB__FILE__', __FILE__ );
 define( 'SEMANTIC_LB_PATH', plugin_dir_path( SEMANTIC_LB__FILE__ ) );
 define( 'SEMANTIC_LB_URL', plugins_url( '/', SEMANTIC_LB__FILE__ ) );

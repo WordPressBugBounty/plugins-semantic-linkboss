@@ -66,6 +66,15 @@ class Auth {
 				'permission_callback' => array( $this, 'update_permissions_check' ),
 			)
 		);
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/refresh-token',
+			array(
+				'methods'             => WP_REST_Server::EDITABLE,
+				'callback'            => array( $this, 'refresh_access_token' ),
+				'permission_callback' => array( $this, 'update_permissions_check' ),
+			)
+		);
 	}
 
 	/**

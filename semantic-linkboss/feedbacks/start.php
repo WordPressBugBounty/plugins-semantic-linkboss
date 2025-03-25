@@ -24,7 +24,7 @@ if ( ! function_exists( 'rc_dynamic_init' ) ) {
 			/**
 			 * Include SDK
 			 */
-			require_once dirname( __FILE__ ) . '/notice.php';
+			require_once __DIR__ . '/notice.php';
 			if ( function_exists( 'rc_sdk_automate' ) ) {
 				rc_sdk_automate( $params );
 			}

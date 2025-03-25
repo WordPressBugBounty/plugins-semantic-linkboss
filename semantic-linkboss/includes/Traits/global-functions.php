@@ -194,7 +194,7 @@ trait Global_Functions {
 
 		$total_count = array_reduce(
 			$post_counts,
-			function ($carry, $counts) {
+			function ( $carry, $counts ) {
 				return $carry + $counts['total'];
 			},
 			0

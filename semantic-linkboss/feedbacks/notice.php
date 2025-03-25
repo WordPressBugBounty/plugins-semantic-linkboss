@@ -21,7 +21,7 @@ if ( ! class_exists( 'RC_Reviews_Collector' ) ) {
 
 		/**
 		 * Get Instance
-		 * 
+		 *
 		 * @since 0.0.0
 		 */
 		public static function get_instance( $params ) {
@@ -113,7 +113,6 @@ if ( ! class_exists( 'RC_Reviews_Collector' ) ) {
 				update_option( $rc_count_name, 1 );
 			}
 			update_option( $rc_count_name, $rc_attempt + 1 );
-
 		}
 
 		/**
@@ -175,11 +174,11 @@ if ( ! class_exists( 'RC_Reviews_Collector' ) ) {
 				wp_die();
 			}
 
-			if ( ! current_user_can('manage_options') ) {
+			if ( ! current_user_can( 'manage_options' ) ) {
 				wp_send_json(array(
-					'status'	=> 'error',
-					'title'		=> 'Error',
-					'message'	=> 'Denied, you don\'t have right permission',
+					'status'    => 'error',
+					'title'     => 'Error',
+					'message'   => 'Denied, you don\'t have right permission',
 				));
 				wp_die();
 			}
@@ -193,7 +192,7 @@ if ( ! class_exists( 'RC_Reviews_Collector' ) ) {
 				/**
 				 * Next schedule date for attempt
 				 */
-				update_option( $date_name, gmdate( 'Y-m-d', strtotime( "+1 month" ) ) );
+				update_option( $date_name, gmdate( 'Y-m-d', strtotime( '+1 month' ) ) );
 			} elseif ( $sanitized_status == 'yes' ) {
 				update_option( $allow_name, 'yes' );
 			}
@@ -228,7 +227,7 @@ if ( ! class_exists( 'RC_Reviews_Collector' ) ) {
 			$plugin_icon  = isset( $this->params['plugin_icon'] ) ? $this->params['plugin_icon'] : '';
 
 			?>
-				<div class="rc-global-notice notice notice-success is-dismissible <?php echo esc_attr(substr($this->rc_name, 0, -33)); ?>">
+				<div class="rc-global-notice notice notice-success is-dismissible <?php echo esc_attr( substr( $this->rc_name, 0, -33 ) ); ?>">
 					<div class="rc-global-header">
 						<?php if ( ! empty( $plugin_icon ) ) : ?>
 						<div class="bdt-notice-rc-logo">
@@ -293,11 +292,11 @@ if ( ! class_exists( 'RC_Reviews_Collector' ) ) {
 				wp_die();
 			}
 
-			if ( !current_user_can('manage_options') ) {
+			if ( ! current_user_can( 'manage_options' ) ) {
 				wp_send_json(array(
-					'status'	=> 'error',
-					'title'		=> 'Error',
-					'message'	=> 'Denied, you don\'t have right permission',
+					'status'    => 'error',
+					'title'     => 'Error',
+					'message'   => 'Denied, you don\'t have right permission',
 				));
 				wp_die();
 			}

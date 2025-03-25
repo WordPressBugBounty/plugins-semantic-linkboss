@@ -72,7 +72,6 @@ class Dashboard {
 				'permission_callback' => array( $this, 'permissions_check' ),
 			)
 		);
-
 	}
 
 	/**

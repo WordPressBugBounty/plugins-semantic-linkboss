@@ -23,6 +23,7 @@ use SEMANTIC_LB\Traits\Global_Functions;
 class Updates {
 
 	use Global_Functions;
+
 	private static $instance = null;
 
 	/**

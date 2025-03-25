@@ -1,11 +1,11 @@
 === LinkBoss - Semantic Internal Linking ===
-Contributors: zventures, bdkoder, ahmdsabbir, prapon
+Contributors: zventures, anikyusuf, bdkoder, ahmdsabbir, prapon
 Donate link: https://linkboss.io/donate
 Tags: SEO, links, internal links, automation, linkboss
 Requires at least: 5.6
 Tested up to: 6.7.2
 Requires PHP: 7.4
-Stable tag: 2.7.3
+Stable tag: 2.7.4
 License: GPLv3 or later
 License URI: https://opensource.org/licenses/GPL-3.0
 
@@ -73,6 +73,14 @@ Yes, interlinks created by LinkBoss will remain on your site even if you deactiv
 4. **Reports** - Detailed analytics and reports on your internal links.
 
 == Changelog ==
+
+= 2.7.4 [25th March 2025] =
+
+Added: Post Count base Sync Speed
+Improved: Cron improved
+Improved: Sync Speed improved
+Improved: Socket Token improved
+Deprecated: KB base Sync Speed
 
 = 2.7.3 [9th March 2025] =
 

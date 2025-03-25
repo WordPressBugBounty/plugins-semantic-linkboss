@@ -25,7 +25,7 @@ class Sync_Posts {
 	use Global_Functions;
 
 	public static $show_msg   = false;
-	public static $sync_speed = 512;
+	public static $sync_speed = 10;
 	public static $force_data = false;
 	/**
 	 * Construct
@@ -33,7 +33,7 @@ class Sync_Posts {
 	 * @since 0.0.0
 	 */
 	public function __construct() {
-		self::$sync_speed = get_option( 'linkboss_sync_speed', 512 );
+		self::$sync_speed = get_option( 'linkboss_sync_speed', 10 );
 	}
 
 	public static function cron_ready_batch_for_process() {
@@ -83,9 +83,9 @@ class Sync_Posts {
 	 */
 	public function ready_batch_for_process() {
 		/**
-		 * Set the maximum size threshold in bytes (512KB).
+		 * Set the maximum number of posts per batch (e.g., 5 or 10).
 		 */
-		$max_size_threshold = 1024 * self::$sync_speed;
+		$max_posts_per_batch = self::$sync_speed; // Change this value as needed.
 
 		/**
 		 * Initialize an array to store batches of post_id values.
@@ -95,8 +95,7 @@ class Sync_Posts {
 		/**
 		 * Initialize variables to keep track of the current batch.
 		 */
-		$current_batch      = array();
-		$current_batch_size = 0;
+		$current_batch = array();
 
 		/**
 		 * Query the database for post_id and content_size ordered by content_size.
@@ -123,23 +122,20 @@ class Sync_Posts {
 		}
 
 		foreach ( $results as $row ) {
-			$data_id      = $row->post_id;
-			$content_size = $row->content_size;
+			$data_id = $row->post_id;
 
 			/**
-			 * If adding this row to the current batch exceeds the threshold, start a new batch.
+			 * If adding this row to the current batch exceeds the post limit, start a new batch.
 			 */
-			if ( $current_batch_size + $content_size > $max_size_threshold ) {
-				$batches[]          = $current_batch;
-				$current_batch      = array();
-				$current_batch_size = 0;
+			if ( count( $current_batch ) >= $max_posts_per_batch ) {
+				$batches[]     = $current_batch;
+				$current_batch = array();
 			}
 
 			/**
 			 * Add the post_id to the current batch.
 			 */
-			$current_batch[]     = $data_id;
-			$current_batch_size += $content_size;
+			$current_batch[] = $data_id;
 		}
 
 		/**

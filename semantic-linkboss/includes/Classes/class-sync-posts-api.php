@@ -30,8 +30,6 @@ class Sync_Posts_Api extends Sync_Posts {
 
 	use Global_Functions;
 
-	public static $sync_speed = 512;
-
 		/**
 		 * Namespace
 		 *
@@ -258,6 +256,7 @@ class Sync_Posts_Api extends Sync_Posts {
 	 */
 	public function sync_init( $params ) {
 		$posts      = isset( $params['posts'] ) ? (int) sanitize_text_field( wp_unslash( $params['posts'] ) ) : 0;
+		$pages      = isset( $params['pages'] ) ? (int) sanitize_text_field( wp_unslash( $params['pages'] ) ) : 0;
 		$category   = isset( $params['category'] ) ? (int) sanitize_text_field( wp_unslash( $params['category'] ) ) : 0;
 		$sync_done  = isset( $params['sync_done'] ) ? (int) sanitize_text_field( wp_unslash( $params['sync_done'] ) ) : 0;
 		$force_data = isset( $params['force_data'] ) ? sanitize_text_field( wp_unslash( $params['force_data'] ) ) : false;
@@ -276,6 +275,7 @@ class Sync_Posts_Api extends Sync_Posts {
 
 		$body = array(
 			'posts'    => $posts,
+			'pages'    => $pages,
 			'category' => $category,
 			'status'   => $status,
 		);
