@@ -29,12 +29,12 @@ class Sync_Posts {
 	public static $force_data = false;
 
 	/**
-	   * Tracks post IDs processed during a single request to prevent duplicate syncs.
-	   * Moved here from Cron class in v2.7.1 to handle multiple trigger points.
-	   *
-	   * @var array
-	   * @since 2.7.1
-	   */
+	 * Tracks post IDs processed during a single request to prevent duplicate syncs.
+	 * Moved here from Cron class in v2.7.1 to handle multiple trigger points.
+	 *
+	 * @var array
+	 * @since 2.7.1
+	 */
 	private static $processed_posts_in_request = array();
 
 	/**
@@ -45,19 +45,32 @@ class Sync_Posts {
 	public function __construct() {
 		self::$sync_speed = get_option( 'linkboss_sync_speed', 10 );
 
-		//woocom
-		if ( class_exists( 'WooCommerce' ) ) {
-			add_action( 'edited_term', array( $this, 'on_term_edit' ), 10, 3 );
+		// Check if WooCommerce category sync is enabled
+		$woo_enabled = get_option( 'linkboss_woo_enabled', false );
+
+		// Only hook into term edit if WooCommerce category sync is enabled
+		if ( $woo_enabled ) {
+			$this->hook_into_term_edit();
 		}
+
+		// Removed hook for scheduled Elementor sync v2.7.1
+		// add_action( 'linkboss_schedule_elementor_sync', array( $this, 'handle_scheduled_elementor_sync' ), 10, 1 );
 	}
 
 	/**
-	   * Handle the term edit process for specified taxonomies.
-	   *
-	   * @param int $term_id The term ID.
-	   * @param int $tt_id The term taxonomy ID.
-	   * @param string $taxonomy The taxonomy slug.
-	   */
+	 * Hook into term edit to capture changes and sync for specified taxonomies.
+	 */
+	public function hook_into_term_edit() {
+		add_action( 'edited_term', array( $this, 'on_term_edit' ), 10, 3 );
+	}
+
+	/**
+	 * Handle the term edit process for specified taxonomies.
+	 *
+	 * @param int $term_id The term ID.
+	 * @param int $tt_id The term taxonomy ID.
+	 * @param string $taxonomy The taxonomy slug.
+	 */
 	public function on_term_edit( $term_id, $tt_id, $taxonomy ) {
 		// Check if WooCommerce category sync is enabled
 		$woo_enabled = get_option( 'linkboss_woo_enabled', false );
@@ -76,7 +89,7 @@ class Sync_Posts {
 		$term = get_term( $term_id, $taxonomy );
 
 		if ( is_wp_error( $term ) ) {
-			// error_log( 'Failed to retrieve term: ' . $term->get_error_message() );
+			error_log( 'Failed to retrieve term: ' . $term->get_error_message() );
 			return;
 		}
 
@@ -112,29 +125,28 @@ class Sync_Posts {
 	 * @since 0.1.0
 	 */
 	public static function sync_posts_by_cron_and_hook( $post_id = null ) {
+		// Accept post_id if passed
 		// Guard: Check if this post ID has already been processed in this request.
 		// Use the passed $post_id if available, otherwise, this might be a general batch sync.
 		// Note: This guard primarily works for single post updates triggered by hooks.
 		if ( $post_id && isset( self::$processed_posts_in_request[ $post_id ] ) ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			// error_log( 'LinkBoss Sync (Sync_Posts): Guard prevented duplicate sync for post ID: ' . $post_id );
+			error_log( 'LinkBoss Sync (Sync_Posts): Guard prevented duplicate sync for post ID: ' . $post_id );
 			return; // Already processed, exit.
 		}
 
 		// Mark this post ID as processed for this request if applicable.
 		if ( $post_id ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			// error_log( 'LinkBoss Sync (Sync_Posts): Proceeding with sync for post ID: ' . $post_id );
+			error_log( 'LinkBoss Sync (Sync_Posts): Proceeding with sync for post ID: ' . $post_id );
 			self::$processed_posts_in_request[ $post_id ] = true;
 		} else {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			// error_log( 'LinkBoss Sync (Sync_Posts): Proceeding with general batch sync (no specific post ID).' );
+			error_log( 'LinkBoss Sync (Sync_Posts): Proceeding with general batch sync (no specific post ID).' );
 		}
 
 		self::$show_msg = false;
 		$posts          = new self();
-		// $batches        = $posts->ready_batch_for_process();
-
 		// If a specific post_id is given, we only need the batch containing that ID.
 		// Otherwise, process all batches (original behavior).
 		$batches = $post_id ? $posts->get_batch_for_post( $post_id ) : $posts->ready_batch_for_process();
@@ -148,12 +160,12 @@ class Sync_Posts {
 	}
 
 	/**
-	   * Get the specific batch containing a given post ID.
-	   *
-	   * @param int $post_id The post ID to find.
-	   * @return array|null The batch array containing the post ID, or null if not found.
-	   * @since 2.7.1
-	   */
+	 * Get the specific batch containing a given post ID.
+	 *
+	 * @param int $post_id The post ID to find.
+	 * @return array|null The batch array containing the post ID, or null if not found.
+	 * @since 2.7.1
+	 */
 	public function get_batch_for_post( $post_id ) {
 		$all_batches = $this->ready_batch_for_process();
 		foreach ( $all_batches as $batch ) {
@@ -191,6 +203,7 @@ class Sync_Posts {
 	 * @return array
 	 */
 	public function ready_batch_for_process() {
+		error_log( 'TRIGERRED: ready_batch_for_process' );
 		/**
 		 * Set the maximum number of posts per batch (e.g., 5 or 10).
 		 */
@@ -299,11 +312,166 @@ class Sync_Posts {
 	}
 
 	/**
-	   * Check if the ACF field is of a type we want to process.
-	   *
-	   * @param string $field_type The type of the field.
-	   * @return bool True if it's a processable field, false otherwise.
-	   */
+	 * Get posts and pages based on criteria
+	 *
+	 * @param int|bool $post_id Single post ID to retrieve
+	 * @param array $post_ids Array of post IDs to retrieve
+	 * @param int $posts_per_page Number of posts to retrieve
+	 * @param array $post_status Post statuses to include
+	 * @return array Array of post objects
+	 */
+	public function get_post_pages( $post_id = false, $post_ids = array(), $posts_per_page = 10, $post_status = array( 'publish' ) ) {
+		global $wpdb;
+
+		$linkboss_qb = get_option( 'linkboss_custom_query', '' );
+
+		$post_sources = isset( $linkboss_qb['post_sources'] ) ? $linkboss_qb['post_sources'] : array();
+		$categories   = isset( $linkboss_qb['categories'] ) ? $linkboss_qb['categories'] : array();
+		$__categories = isset( $linkboss_qb['__categories'] ) ? $linkboss_qb['__categories'] : array();
+
+		// Check if WooCommerce category sync is enabled
+		$woo_enabled = get_option( 'linkboss_woo_enabled', false );
+
+		// If WooCommerce is enabled and 'product' is selected in post types, ensure it's included
+		if ( $woo_enabled && ! empty( $post_sources ) ) {
+			// Check if 'product' is already in post_sources
+			if ( ! in_array( 'product', $post_sources ) ) {
+				// Check if we have any product categories specifically selected
+				$has_product_categories = false;
+
+				if ( ! empty( $__categories ) ) {
+					foreach ( $__categories as $tax_query ) {
+						if ( isset( $tax_query['taxonomy'] ) && $tax_query['taxonomy'] === 'product_cat' ) {
+							$has_product_categories = true;
+							break;
+						}
+					}
+				}
+
+				// Include 'product' if:
+				// 1. Specific product categories are selected, OR
+				// 2. No categories are selected at all, OR
+				// 3. Only non-product categories are selected (we still want to include all products)
+				$post_sources[] = 'product';
+			}
+		}
+
+		// Prepare the base query arguments
+		$args = array(
+			'post_type'      => ! empty( $post_sources ) ? $post_sources : array( 'post', 'page' ),
+			'post_status'    => $post_status,
+			'posts_per_page' => $posts_per_page,
+		);
+
+		// Check if we need to handle WooCommerce products specially
+		$has_product = in_array( 'product', $args['post_type'] );
+		$has_product_categories = false;
+
+		// Check if any product categories are selected
+		if ( ! empty( $__categories ) ) {
+			foreach ( $__categories as $tax_query ) {
+				if ( isset( $tax_query['taxonomy'] ) && $tax_query['taxonomy'] === 'product_cat' ) {
+					$has_product_categories = true;
+					break;
+				}
+			}
+		}
+
+		// Special handling for WooCommerce products when categories are selected
+		if ( $woo_enabled && $has_product && ! empty( $__categories ) ) {
+			// Check if we need special handling for products
+			$needs_special_handling = true;
+
+			// If there are product categories selected, we don't need special handling
+			if ( $has_product_categories ) {
+				$needs_special_handling = false;
+			}
+
+			if ( $needs_special_handling ) {
+				// We need to run two separate queries and merge the results
+				// First, get posts based on the selected categories
+				$post_args = $args;
+				$post_args['post_type'] = array_diff( $args['post_type'], array( 'product' ) );
+				$post_args['tax_query'] = $__categories;
+				$post_query = new \WP_Query( $post_args );
+
+				// Then, get all products
+				$product_args = $args;
+				$product_args['post_type'] = array( 'product' );
+				// No tax_query for products to get all of them
+				$product_query = new \WP_Query( $product_args );
+
+				// Merge the results
+				$posts = array_merge( $post_query->posts, $product_query->posts );
+
+				// Return the merged results
+				return $posts;
+			}
+		}
+
+		// Standard query handling
+		if ( ! empty( $__categories ) ) {
+			$args['tax_query'] = $__categories;
+		}
+
+		if ( $post_id ) {
+			$args['p'] = $post_id;
+		}
+
+		if ( ! empty( $post_ids ) ) {
+			$args['post__in'] = $post_ids;
+		}
+
+		$query = new \WP_Query( $args );
+
+		return $query->posts;
+	}
+
+	/**
+	 * Send WordPress Posts as JSON
+	 *
+	 * @since 0.0.0
+	 */
+	public static function send_posts_app( $batches ) {
+
+		foreach ( $batches as $batch ) :
+
+			/**
+			 * $batch is an array of post_id
+			 * Example: [ 3142, 3141, 3140 ]
+			 */
+			$obj   = new self();
+			$posts = $obj->get_post_pages( false, $batch, -1, array( 'publish', 'trash' ) );
+
+			$prepared_posts = $obj->prepared_posts_for_sync( $posts );
+
+			/**
+			 * Remove null values and reindex the array
+			 * Because of Oxygen Builder
+			 */
+			$prepared_posts = array_values( array_filter( $prepared_posts ) );
+
+			/**
+			 * If there are posts to send
+			 */
+			if ( count( $prepared_posts ) > 0 ) {
+				self::send_group( $prepared_posts, $batch, false );
+			}
+
+		endforeach;
+	}
+
+	/**
+	 * Prepared Posts for Sync
+	 *
+	 * @since 2.7.0
+	 */
+	/**
+	 * Check if the ACF field is of a type we want to process.
+	 *
+	 * @param string $field_type The type of the field.
+	 * @return bool True if it's a processable field, false otherwise.
+	 */
 	private function is_processable_acf_field( $field_type ) {
 		$processable_types = array( 'wysiwyg' );
 		return in_array( $field_type, $processable_types, true );
@@ -360,45 +528,6 @@ class Sync_Posts {
 		return $html;
 	}
 
-	/**
-	 * Send WordPress Posts as JSON
-	 *
-	 * @since 0.0.0
-	 */
-	public static function send_posts_app( $batches ) {
-
-		foreach ( $batches as $batch ) :
-
-			/**
-			 * $batch is an array of post_id
-			 * Example: [ 3142, 3141, 3140 ]
-			 */
-			$obj   = new self();
-			$posts = $obj->get_post_pages( false, $batch, -1, array( 'publish', 'trash' ) );
-
-			$prepared_posts = $obj->prepared_posts_for_sync( $posts );
-
-			/**
-			 * Remove null values and reindex the array
-			 * Because of Oxygen Builder
-			 */
-			$prepared_posts = array_values( array_filter( $prepared_posts ) );
-
-			/**
-			 * If there are posts to send
-			 */
-			if ( count( $prepared_posts ) > 0 ) {
-				self::send_group( $prepared_posts, $batch, false );
-			}
-
-		endforeach;
-	}
-
-	/**
-	 * Prepared Posts for Sync
-	 *
-	 * @since 2.7.0
-	 */
 	public function prepared_posts_for_sync( $posts ) {
 		// Check if ACF support is enabled
 		$acf_enabled = get_option( 'linkboss_acf_enabled', false );
@@ -408,15 +537,15 @@ class Sync_Posts {
 
 				$builder_type   = null;
 				$elementor_data = null;
+				$acf_json_structure = array();
+				$original_post_content = $post->post_content;
 				$post_type = $post->post_type;
 				$acf_fields_present = false; // Initialize variable
 				$meta = null;
 
-				$acf_json_structure = array();
-				$original_post_content = $post->post_content;
-
+				// First, check for all builder types
 				if ( defined( 'SEMANTIC_LB_CLASSIC_EDITOR' ) ) {
-						$builder_type = 'classic';
+					$builder_type = 'classic';
 				}
 
 				if ( defined( 'SEMANTIC_LB_ELEMENTOR' ) ) {
@@ -625,7 +754,9 @@ class Sync_Posts {
 
 				switch ( $builder_type ) {
 					case 'elementor':
-						$meta = $elementor_data[0];
+						if ( ! $acf_fields_present ) {
+							$meta = $elementor_data[0];
+						}
 						break;
 					case 'bricks':
 						$meta = isset( $bricks_meta ) ? $bricks_meta : null;
@@ -794,29 +925,75 @@ class Sync_Posts {
 
 	public static function batch_update( $batch_ids, $status = 1 ) {
 		global $wpdb;
+		$table_name = $wpdb->prefix . 'linkboss_sync_batch';
 
-		$post_ids_list = implode( ',', $batch_ids );
-		// todo: need to fixed - check before update / insert on batch table
+		// Ensure batch_ids is an array and not empty
+		if ( ! is_array( $batch_ids ) || empty( $batch_ids ) ) {
+			error_log( 'LinkBoss Sync (batch_update): Received empty or invalid batch_ids.' );
+			return;
+		}
 
-		/**
-		 * Get the current date and time in MySQL datetime format
-		 */
+		// Sanitize IDs to ensure they are integers
+		$sanitized_ids = array_map( 'intval', $batch_ids );
+		$ids_placeholder = implode( ',', array_fill( 0, count( $sanitized_ids ), '%d' ) );
+
+		// Get the current date and time in MySQL datetime format
 		$current_time = current_time( 'mysql' );
 
-		/**
-		 * SQL query to update the sent_status and sync_at in the custom table
-		 */
-		if ( 1 === $status ) {
-			// phpcs:ignore
-			$query = $wpdb->prepare( "UPDATE {$wpdb->prefix}linkboss_sync_batch SET sent_status = 1, sync_at = %s WHERE post_id IN ({$post_ids_list})", $current_time );
-		} else {
-			// phpcs:ignore
-			$query = $wpdb->prepare( "UPDATE {$wpdb->prefix}linkboss_sync_batch SET sent_status = 'F', sync_at = %s WHERE post_id IN ({$post_ids_list})", $current_time );
+		// Handle failed status first
+		if ( 1 !== $status ) {
+			$failed_ids_list = implode( ',', $sanitized_ids );
+			error_log( 'LinkBoss Sync (batch_update): Marking posts as Failed (F): ' . $failed_ids_list );
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$query = $wpdb->prepare( "UPDATE {$table_name} SET sent_status = 'F', sync_at = %s WHERE post_id IN ({$ids_placeholder})", array_merge( array( $current_time ), $sanitized_ids ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
+			$wpdb->query( $query );
+			return; // Exit after handling failure
 		}
-		// phpcs:ignore
-		
-		// phpcs:ignore
-		$wpdb->query( $query );
+
+		// Handle successful status (status = 1)
+		// Find out which posts in the batch are 'trash' and which are 'publish' (or other non-trash statuses)
+		$trashed_ids   = array();
+		$published_ids = array();
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$results = $wpdb->get_results( $wpdb->prepare( "SELECT post_id, post_status FROM {$table_name} WHERE post_id IN ({$ids_placeholder})", $sanitized_ids ), ARRAY_A );
+
+		if ( $results ) {
+			foreach ( $results as $row ) {
+				if ( 'trash' === $row['post_status'] ) {
+					$trashed_ids[] = (int) $row['post_id'];
+				} else {
+					$published_ids[] = (int) $row['post_id'];
+				}
+			}
+		} else {
+			error_log( 'LinkBoss Sync (batch_update): Could not retrieve post statuses for batch IDs: ' . implode( ',', $sanitized_ids ) );
+			// Decide if we should proceed or return. For now, let's assume they were published if not found.
+			$published_ids = $sanitized_ids;
+		}
+
+		// Process published posts (Update status to 1)
+		if ( ! empty( $published_ids ) ) {
+			$published_ids_list = implode( ',', $published_ids );
+			$published_ids_placeholder = implode( ',', array_fill( 0, count( $published_ids ), '%d' ) );
+			error_log( 'LinkBoss Sync (batch_update): Marking posts as Synced (1): ' . $published_ids_list );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$update_query = $wpdb->prepare( "UPDATE {$table_name} SET sent_status = 1, sync_at = %s WHERE post_id IN ({$published_ids_placeholder})", array_merge( array( $current_time ), $published_ids ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
+			$wpdb->query( $update_query );
+		}
+
+		// Process trashed posts (Delete from batch table)
+		if ( ! empty( $trashed_ids ) ) {
+			$trashed_ids_list = implode( ',', $trashed_ids );
+			$trashed_ids_placeholder = implode( ',', array_fill( 0, count( $trashed_ids ), '%d' ) );
+			error_log( 'LinkBoss Sync (batch_update): Deleting successfully synced trashed posts from batch table: ' . $trashed_ids_list );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$delete_query = $wpdb->prepare( "DELETE FROM {$table_name} WHERE post_id IN ({$trashed_ids_placeholder})", $trashed_ids );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
+			$wpdb->query( $delete_query );
+		}
 	}
 
 	/**
@@ -854,12 +1031,14 @@ class Sync_Posts {
 	}
 
 	/**
-	   * Resets the processed posts tracker array.
-	   * Should be called via the 'shutdown' action.
-	   *
-	   * @since 2.7.1
-	   */
+	 * Resets the processed posts tracker array.
+	 * Should be called via the 'shutdown' action.
+	 *
+	 * @since 2.7.1
+	 */
 	public static function reset_processed_posts() {
 		self::$processed_posts_in_request = array();
 	}
+
+	// Removed handle_scheduled_elementor_sync method in v2.7.1 as scheduling was reverted.
 }

@@ -187,7 +187,13 @@ class Settings {
 				return $categories;
 
 			case 'get_sync_speed':
-				$sync_speed = get_option( 'linkboss_sync_speed', 512 );
+				$sync_speed = get_option( 'linkboss_sync_speed', 10 );
+				/**
+				 * If sync speed is not set, then set it to 50
+				 */
+				if ( $sync_speed > 50 ) {
+					$sync_speed = 50;
+				}
 
 				if ( ! $sync_speed ) {
 					return new WP_Error( 'no_sync_speed', esc_html__( 'Oops, Sync Speed is not found.' ), array( 'status' => 404 ) );
@@ -201,18 +207,33 @@ class Settings {
 					),
 					200
 				);
+
+			case 'get_acf_enabled':
+				$acf_enabled = get_option( 'linkboss_acf_enabled', false );
+
+				return rest_ensure_response(
+					array(
+						'status'      => 'success',
+						'message'     => 'ACF support status fetched successfully',
+						'acf_enabled' => $acf_enabled,
+					),
+					200
+				);
+
+			case 'get_woo_enabled':
+				$woo_enabled = get_option( 'linkboss_woo_enabled', false );
+
+				return rest_ensure_response(
+					array(
+						'status'      => 'success',
+						'message'     => 'WooCommerce category sync status fetched successfully',
+						'woo_enabled' => $woo_enabled,
+					),
+					200
+				);
 			default:
 				return new WP_Error( 'no_settings', esc_html__( 'Oops, Settings is not found.' ), array( 'status' => 404 ) );
 		}
-
-		return rest_ensure_response(
-			array(
-				'status'  => 'success',
-				'message' => 'Settings fetched successfully',
-				'data'    => 'Settings',
-			),
-			200
-		);
 	}
 
 	/**
@@ -275,6 +296,33 @@ class Settings {
 					),
 					200
 				);
+
+			case 'save_acf_enabled':
+				$acf_enabled = isset( $params['acf_enabled'] ) ? (bool) $params['acf_enabled'] : false;
+				update_option( 'linkboss_acf_enabled', $acf_enabled );
+
+				return rest_ensure_response(
+					array(
+						'status'      => 'success',
+						'message'     => 'ACF support setting saved successfully',
+						'acf_enabled' => $acf_enabled,
+					),
+					200
+				);
+
+			case 'save_woo_enabled':
+				$woo_enabled = isset( $params['woo_enabled'] ) ? (bool) $params['woo_enabled'] : false;
+				update_option( 'linkboss_woo_enabled', $woo_enabled );
+
+				return rest_ensure_response(
+					array(
+						'status'      => 'success',
+						'message'     => 'WooCommerce category sync setting saved successfully',
+						'woo_enabled' => $woo_enabled,
+					),
+					200
+				);
+
 			case 'reset_sync_batch':
 				$this->reset_sync_batch();
 
@@ -329,6 +377,10 @@ class Settings {
 			'attachment'        => '',
 		);
 
+		if ( class_exists( 'WooCommerce' ) ) {
+			$post_types['product'] = 'Product (' . wp_count_posts( 'product' )->publish . ')';
+		}
+
 		$post_types = array_diff_key( $post_types, $ignore_post_types );
 		return $post_types;
 	}
@@ -345,13 +397,23 @@ class Settings {
 		 */
 		$post_types = array_diff( $post_types, array( 'page' ) );
 
+		/**
+		 * Add WooCommerce product post type if WooCommerce is active
+		 */
+		if ( class_exists( 'WooCommerce' ) ) {
+			$post_types[] = 'product';
+		}
+
 		$categories = array();
 
 		foreach ( $post_types as $custom_post_type ) {
 			/**
 			 * Get the taxonomy associated with the custom post type
+	   *
+	   *  get_object_taxonomies( $custom_post_type )[0]
+	   * Assuming only one taxonomy is associated
 			 */
-			$taxonomy = get_object_taxonomies( $custom_post_type )[0]; // Assuming only one taxonomy is associated
+			$taxonomy = get_object_taxonomies( $custom_post_type );
 
 			/**
 			 * Get the terms (categories) associated with the taxonomy
@@ -359,7 +421,7 @@ class Settings {
 			$terms = get_terms(
 				array(
 					'taxonomy'   => $taxonomy,
-					'hide_empty' => false, // Include empty categories
+					'hide_empty' => true, // Include empty categories
 				)
 			);
 

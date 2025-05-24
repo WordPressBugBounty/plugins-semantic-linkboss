@@ -67,7 +67,7 @@ class Cron {
 		 *
 		 * @since 2.0.5
 		 */
-		$this->create_cron_job( 'linkboss_ready_batch_for_process', 4 * HOUR_IN_SECONDS, 'ready_batch_for_process' );
+		$this->create_cron_job( 'linkboss_ready_batch_for_process', MINUTE_IN_SECONDS * 20, 'ready_batch_for_process' );
 
 		/**
 		 * Insert Table IDs for Batch Sync
@@ -142,6 +142,22 @@ class Cron {
 		}
 
 		add_action( 'save_post', array( $this, 'post_update_save_trigger' ), 10, 3 );
+
+		/**
+		 * Sync Posts to LinkBoss after ACF fields are saved.
+		 * Priority 20 ensures it runs after ACF's own save actions (default 10).
+		 *
+		 * @since 2.7.1
+		 */
+		add_action( 'acf/save_post', array( $this, 'trigger_sync_for_acf_post' ), 20 );
+
+		/**
+		 * Reset the processed posts tracker at the end of the request.
+		 *
+		 * @since 2.7.1
+		 */
+		// Changed target class to Sync_Posts in v2.7.1
+		add_action( 'shutdown', array( 'SEMANTIC_LB\Classes\Sync_Posts', 'reset_processed_posts' ) );
 	}
 
 
@@ -161,13 +177,62 @@ class Cron {
 			return;
 		}
 
-		// skip if post meta _elementor_data exists
+		/**
+		 * If ACF support is enabled and this post has ACF fields,
+		 * let the 'acf/save_post' hook handle the sync.
+		 *
+		 * @since 2.7.1
+		 */
+		$acf_enabled = get_option( 'linkboss_acf_enabled', false );
+		if ( $acf_enabled && function_exists( 'get_fields' ) && get_fields( $post_id ) ) {
+			return;
+		}
+
+		// skip if post meta _elementor_data exists (and it's not an ACF post handled above)
 		if ( self::is_elementor_post( $post_id ) ) {
 			return;
 		}
 
-		// Perform your custom logic after save/publish.
-		$this->sync_posts_on_post_update( $post_id );
+		// Perform sync for non-ACF posts or when ACF support is disabled.
+		// Pass post_id to the sync function for the guard check.
+		self::sync_posts_on_post_update( $post_id );
+	}
+
+	/**
+	 * Trigger sync specifically for posts after ACF fields are saved.
+	 *
+	 * @param int $post_id The ID of the post being saved.
+	 * @since 2.7.1
+	 */
+	public function trigger_sync_for_acf_post( $post_id ) {
+		// Check if ACF support is enabled in settings.
+		$acf_enabled = get_option( 'linkboss_acf_enabled', false );
+		if ( ! $acf_enabled ) {
+			return;
+		}
+
+		// Get the post object.
+		$post = get_post( $post_id );
+
+		// Basic checks similar to post_update_save_trigger.
+		if ( ! $post || defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+		if ( wp_is_post_revision( $post_id ) || 'auto-draft' === $post->post_status ) {
+			return;
+		}
+		if ( 'publish' !== $post->post_status ) {
+			return;
+		}
+
+		// Add check to prevent this hook from syncing Elementor posts v2.7.1
+		if ( self::is_elementor_post( $post_id ) ) {
+			return;
+		}
+
+		// Perform the sync.
+		// Pass post_id to the sync function for the guard check.
+		self::sync_posts_on_post_update( $post_id );
 	}
 
 	/**
@@ -242,12 +307,24 @@ class Cron {
 	 * @since 0.0.6
 	 */
 	public static function sync_posts_on_post_update( $post_id ) {
+		// Add check to prevent general hooks (like publish_*) from syncing Elementor posts v2.7.1
+		// The Elementor-specific hook elementor/document/after_save should handle these.
+		if ( self::is_elementor_post( $post_id ) ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'LinkBoss Sync (Cron): sync_posts_on_post_update skipped for Elementor post ID: ' . $post_id );
+			return;
+		}
+
+		// Guard logic moved to Sync_Posts::sync_posts_by_cron_and_hook in v2.7.1
 
 		$updates_obj = new Updates();
 		$updates_obj->data_sync_require( $post_id );
 
-		Sync_Posts::sync_posts_by_cron_and_hook();
+		// Pass post_id to the core sync function
+		Sync_Posts::sync_posts_by_cron_and_hook( $post_id );
 	}
+
+	// Removed reset_processed_posts method as it's now handled in Sync_Posts class.
 
 	/**
 	 * Check if meta _elementor_data exists for a post

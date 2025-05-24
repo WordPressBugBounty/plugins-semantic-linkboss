@@ -149,6 +149,77 @@ class Sync_Posts_Api extends Sync_Posts {
 		*/
 	}
 
+	/**
+	 * Prepare the content of categories for sync.
+	 */
+	public function ready_wp_category_contents_for_sync() {
+		// Check if WooCommerce category sync is enabled
+		$woo_enabled = get_option( 'linkboss_woo_enabled', false );
+
+		if ( ! $woo_enabled ) {
+			return;
+		}
+
+		$taxonomies = array( 'category', 'product_cat' ); // Include 'product_cat' for WooCommerce
+		$categories_data = array();
+
+		foreach ( $taxonomies as $taxonomy ) {
+			$categories = get_terms( array(
+				'taxonomy'   => $taxonomy,
+				'orderby'    => 'name',
+				'order'      => 'ASC',
+				'hide_empty' => false,
+			) );
+
+			if ( is_wp_error( $categories ) ) {
+				// error_log( 'Error retrieving terms: ' . $categories->get_error_message() );
+				return; // Exit if there's an error
+			}
+
+			foreach ( $categories as $category ) {
+				if ( ! empty( $category->description ) ) {
+					// Prepare the data in the specified format
+					$categories_data[] = array(
+						'_postId'    => $category->term_id,
+						'category'   => wp_json_encode( array( $category->term_id ) ),
+						'title'      => $category->name,
+						'content'    => $category->description,
+						'postType'   => 'Category Archive',
+						'postStatus' => 'publish',
+						'createdAt'  => current_time( 'mysql' ),
+						'updatedAt'  => current_time( 'mysql' ),
+						'url'        => get_term_link( $category ),
+						'builder'    => 'classic',
+						'meta'       => null,
+					);
+				}
+			}
+		}
+
+		if ( ! empty( $categories_data ) ) {
+			$response = $this->send_group( $categories_data, '', false );
+
+			if ( is_wp_error( $response ) ) {
+				// error_log( 'Error sending group: ' . $response->get_error_message() );
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Aggregate category sync methods
+	 */
+	public function trigger_category_sync() {
+		// Check if WooCommerce category sync is enabled
+		$woo_enabled = get_option( 'linkboss_woo_enabled', false );
+
+		if ( ! $woo_enabled ) {
+			return;
+		}
+
+		$this->ready_wp_category_contents_for_sync();
+	}
+
 	public function prepare_batch_for_sync() {
 
 		self::$show_msg = true;
@@ -224,13 +295,33 @@ class Sync_Posts_Api extends Sync_Posts {
 	 * @since 2.0.3
 	 */
 	public function ready_wp_categories_for_sync() {
+		// Check if WooCommerce category sync is enabled
+		$woo_enabled = get_option( 'linkboss_woo_enabled', false );
 
+		// Get regular WordPress categories
 		$categories = get_categories(
 			array(
 				'orderby' => 'name',
 				'order'   => 'ASC',
 			)
 		);
+
+		// Get WooCommerce product categories if enabled
+		if ( $woo_enabled && taxonomy_exists( 'product_cat' ) ) {
+			$product_categories = get_terms(
+				array(
+					'taxonomy'   => 'product_cat',
+					'orderby'    => 'name',
+					'order'      => 'ASC',
+					'hide_empty' => false,
+				)
+			);
+
+			// Merge categories if product categories exist and no error occurred
+			if ( ! is_wp_error( $product_categories ) && ! empty( $product_categories ) ) {
+				$categories = array_merge( $categories, $product_categories );
+			}
+		}
 
 		$categories_data = array_map(
 			function ( $category ) {
@@ -257,9 +348,31 @@ class Sync_Posts_Api extends Sync_Posts {
 	public function sync_init( $params ) {
 		$posts      = isset( $params['posts'] ) ? (int) sanitize_text_field( wp_unslash( $params['posts'] ) ) : 0;
 		$pages      = isset( $params['pages'] ) ? (int) sanitize_text_field( wp_unslash( $params['pages'] ) ) : 0;
-		$category   = isset( $params['category'] ) ? (int) sanitize_text_field( wp_unslash( $params['category'] ) ) : 0;
 		$sync_done  = isset( $params['sync_done'] ) ? (int) sanitize_text_field( wp_unslash( $params['sync_done'] ) ) : 0;
 		$force_data = isset( $params['force_data'] ) ? sanitize_text_field( wp_unslash( $params['force_data'] ) ) : false;
+
+		// Check if WooCommerce category sync is enabled
+		$woo_enabled = get_option( 'linkboss_woo_enabled', false );
+
+		global $wpdb;
+
+		// Get category count based on WooCommerce toggle setting
+		if ( $woo_enabled ) {
+			// Query to count both regular categories and WooCommerce product categories
+			$category_posts_query = $wpdb->prepare(
+				"SELECT term_id FROM {$wpdb->terms} WHERE term_id IN (SELECT term_id FROM {$wpdb->term_taxonomy} WHERE taxonomy = %s OR taxonomy = %s)",
+				'category',
+				'product_cat'
+			);
+		} else {
+			// Original query for just regular categories
+			$category_posts_query = $wpdb->prepare(
+				"SELECT term_id FROM {$wpdb->terms} WHERE term_id IN (SELECT term_id FROM {$wpdb->term_taxonomy} WHERE taxonomy = %s)",
+				'category'
+			);
+		}
+
+		$category = count( $wpdb->get_results( $category_posts_query ) );
 
 		$status  = ( 0 === $sync_done ) ? 'complete' : 'partial';
 		$status  = ( 'yes' === $force_data ) ? 'complete' : $status;
@@ -274,7 +387,7 @@ class Sync_Posts_Api extends Sync_Posts {
 		);
 
 		$body = array(
-			'posts'    => $posts,
+			'posts'    => $woo_enabled ? $posts + $category : $posts, // Only include category count if WooCommerce sync is enabled
 			'pages'    => $pages,
 			'category' => $category,
 			'status'   => $status,
@@ -329,6 +442,14 @@ class Sync_Posts_Api extends Sync_Posts {
 	 * @since 2.2.0
 	 */
 	public function sync_finish() {
+		// Check if WooCommerce category sync is enabled
+		$woo_enabled = get_option( 'linkboss_woo_enabled', false );
+
+		// Sync WooCommerce product category contents if enabled
+		if ( $woo_enabled ) {
+			$this->ready_wp_category_contents_for_sync();
+		}
+
 		/**
 		 * Request Categories Sync
 		 */
