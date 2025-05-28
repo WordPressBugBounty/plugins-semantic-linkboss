@@ -102,12 +102,10 @@ final class Plugin {
 		 */
 		$script_config = array(
 			'rest_url'     => esc_url( get_rest_url() ),
-			'ajax_url'     => admin_url( 'admin-ajax.php' ),
 			'app_api'      => esc_url( SEMANTIC_LB_REMOTE_URL ),
 			'staging'      => ! defined( 'SEMANTIC_LB_STAGING' ) ? true : false,
 			'version'      => SEMANTIC_LB_VERSION,
-			'nonce'        => wp_create_nonce( 'linkboss_ajax_nonce' ),
-			'rest_nonce'   => wp_create_nonce( 'wp_rest' ),
+			'nonce'        => wp_create_nonce( 'wp_rest' ),
 			'assets_url'   => SEMANTIC_LB_ASSETS_URL,
 			'logo'         => SEMANTIC_LB_ASSETS_URL . 'imgs/logo.png',
 			'root_url'     => SEMANTIC_LB_URL,
