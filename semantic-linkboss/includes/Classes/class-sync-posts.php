@@ -76,7 +76,6 @@ class Sync_Posts {
 		$term = get_term( $term_id, $taxonomy );
 
 		if ( is_wp_error( $term ) ) {
-			// error_log( 'Failed to retrieve term: ' . $term->get_error_message() );
 			return;
 		}
 
@@ -116,19 +115,12 @@ class Sync_Posts {
 		// Use the passed $post_id if available, otherwise, this might be a general batch sync.
 		// Note: This guard primarily works for single post updates triggered by hooks.
 		if ( $post_id && isset( self::$processed_posts_in_request[ $post_id ] ) ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			// error_log( 'LinkBoss Sync (Sync_Posts): Guard prevented duplicate sync for post ID: ' . $post_id );
 			return; // Already processed, exit.
 		}
 
 		// Mark this post ID as processed for this request if applicable.
 		if ( $post_id ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			// error_log( 'LinkBoss Sync (Sync_Posts): Proceeding with sync for post ID: ' . $post_id );
 			self::$processed_posts_in_request[ $post_id ] = true;
-		} else {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			// error_log( 'LinkBoss Sync (Sync_Posts): Proceeding with general batch sync (no specific post ID).' );
 		}
 
 		self::$show_msg = false;
@@ -191,6 +183,12 @@ class Sync_Posts {
 	 * @return array
 	 */
 	public function ready_batch_for_process() {
+		// Check if we're syncing by URLs
+		$linkboss_qb = get_option('linkboss_custom_query', '');
+		if (isset($linkboss_qb['sync_by']) && 'urls' === $linkboss_qb['sync_by'] && !empty($linkboss_qb['url_list'])) {
+			return $this->create_batches_from_urls($linkboss_qb['url_list']);
+		}
+		
 		/**
 		 * Set the maximum number of posts per batch (e.g., 5 or 10).
 		 */
@@ -216,10 +214,10 @@ class Sync_Posts {
 			$wpdb->query( "UPDATE {$wpdb->prefix}linkboss_sync_batch SET sent_status = NULL WHERE sent_status = 1" );
 		}
 
+		// Improved query with proper parentheses for the WHERE clause
 		// phpcs:ignore
-		// $query = $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}linkboss_sync_batch WHERE sent_status IS NULL && post_status = 'publish' OR post_status = 'trash' ORDER BY post_id ASC" );
-    // phpcs:ignore
-    $query = "SELECT * FROM {$wpdb->prefix}linkboss_sync_batch WHERE sent_status IS NULL && post_status = 'publish' OR post_status = 'trash' ORDER BY post_id ASC";
+		$query = "SELECT * FROM {$wpdb->prefix}linkboss_sync_batch WHERE (sent_status IS NULL AND (post_status = 'publish' OR post_status = 'trash')) ORDER BY post_id ASC";
+		
 		// phpcs:ignore
 		$results = $wpdb->get_results( $query );
 
@@ -232,6 +230,7 @@ class Sync_Posts {
 
 		foreach ( $results as $row ) {
 			$data_id = $row->post_id;
+			$post_type = isset($row->post_type) ? $row->post_type : 'unknown';
 
 			/**
 			 * If adding this row to the current batch exceeds the post limit, start a new batch.
@@ -253,8 +252,188 @@ class Sync_Posts {
 		if ( ! empty( $current_batch ) ) {
 			$batches[] = $current_batch;
 		}
-
+		
 		return $batches;
+	}
+	
+	/**
+	 * Enhanced function to convert URL to post ID with support for custom post types
+	 *
+	 * @param string $url The URL to convert
+	 * @return int The post ID or 0 if not found
+	 * @since 2.7.6
+	 */
+	public function enhanced_url_to_postid($url) {
+		// First try the native WordPress function
+		$post_id = url_to_postid($url);
+		
+		// If the native function worked, return the result
+		if ($post_id > 0) {
+			$post = get_post($post_id);
+			return $post_id;
+		}
+		
+		// If the native function failed, try our enhanced approach
+		// Parse the URL to get the path
+		$url_parts = parse_url($url);
+		if (!isset($url_parts['path'])) {
+			return 0;
+		}
+		
+		// Get the path and remove trailing slash
+		$path = untrailingslashit($url_parts['path']);
+		
+		// Try to find the post by path
+		global $wpdb;
+		
+		// Get all registered post types
+		$post_types = get_post_types(['public' => true], 'names');
+		$post_types_str = "'" . implode("','", $post_types) . "'";
+		
+		// Query for posts with matching path
+		$sql = $wpdb->prepare(
+			"SELECT ID, post_type FROM $wpdb->posts 
+			WHERE post_status = 'publish' 
+			AND post_type IN ($post_types_str) 
+			AND (
+				%s LIKE CONCAT('%%/', post_name) 
+				OR %s LIKE CONCAT('%%/', post_name, '/') 
+				OR guid = %s
+			)
+			ORDER BY post_type = 'post' DESC, post_type = 'page' DESC, ID DESC 
+			LIMIT 1",
+			$path, $path, $url
+		);
+		
+		$result = $wpdb->get_row($sql);
+		
+		if ($result) {
+			return (int)$result->ID;
+		} else {
+			
+			// Try one more approach - check if this might be a custom post type archive or taxonomy
+			// This is a simplified approach and might need to be expanded based on your site structure
+			foreach ($post_types as $post_type) {
+				$post_type_obj = get_post_type_object($post_type);
+				if ($post_type_obj && !empty($post_type_obj->rewrite['slug'])) {
+					$post_type_slug = $post_type_obj->rewrite['slug'];
+					if (strpos($path, '/' . $post_type_slug . '/') !== false) {
+						// This might be a custom post type URL
+						// Extract the slug after the post type
+						$slug_parts = explode('/' . $post_type_slug . '/', $path);
+						if (isset($slug_parts[1])) {
+							$post_slug = trim($slug_parts[1], '/');
+							
+							// Look up the post by slug and type
+							$post = get_page_by_path($post_slug, OBJECT, $post_type);
+							if ($post) {
+								return $post->ID;
+							}
+						}
+					}
+				}
+			}
+			
+			return 0;
+		}
+	}
+
+	/**
+	 * Create batches from a list of URLs
+	 *
+	 * @param string $url_list Newline-separated list of URLs
+	 * @return array Array of batches containing post IDs
+	 * @since 2.7.5
+	 */
+	public function create_batches_from_urls($url_list) {
+		if (empty($url_list)) {
+			return array();
+		}
+		
+		$max_posts_per_batch = self::$sync_speed;
+		$urls = explode("\n", $url_list);
+		$urls = array_map('trim', $urls);
+		$urls = array_filter($urls);
+		
+		$post_ids = array();
+		$batches = array();
+		$current_batch = array();
+		
+		// Get post IDs from URLs
+		foreach ($urls as $url) {
+			// Use our enhanced function instead of url_to_postid
+			$post_id = $this->enhanced_url_to_postid($url);
+			
+			if ($post_id > 0) {
+				$post_ids[] = $post_id;
+				
+				// Add to batch
+				if (count($current_batch) >= $max_posts_per_batch) {
+					$batches[] = $current_batch;
+					$current_batch = array();
+				}
+				
+				$current_batch[] = $post_id;
+				
+				// Make sure the post is in the sync_batch table
+				$this->ensure_post_in_sync_batch($post_id);
+				
+			}
+		}
+		
+		// Add any remaining posts to the last batch
+		if (!empty($current_batch)) {
+			$batches[] = $current_batch;
+		}
+		
+		return $batches;
+	}
+	
+	/**
+	 * Ensure a post is in the sync_batch table
+	 *
+	 * @param int $post_id The post ID to add to the sync batch
+	 * @since 2.7.5
+	 */
+	private function ensure_post_in_sync_batch($post_id) {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'linkboss_sync_batch';
+		
+		// Check if post already exists in the table
+		// phpcs:ignore
+		$exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE post_id = %d", $post_id));
+		
+		if (!$exists) {
+			$post = get_post($post_id);
+			if ($post) {
+				// Get post content size
+				$content_size = mb_strlen($post->post_content, '8bit');
+				
+				// Insert the post into the sync_batch table
+				// phpcs:ignore
+				$result = $wpdb->insert(
+					$table_name,
+					array(
+						'post_id' => $post_id,
+						'post_type' => $post->post_type, // Add post_type to the insert
+						'post_status' => $post->post_status,
+						'sent_status' => null,
+						'content_size' => $content_size, // Add content_size to the insert
+					),
+					array('%d', '%s', '%s', '%s', '%d')
+				);
+			}
+		} else if (true === self::$force_data) {
+			// If force data is true, reset the sent_status
+			// phpcs:ignore
+			$wpdb->update(
+				$table_name,
+				array('sent_status' => null),
+				array('post_id' => $post_id),
+				array('%s'),
+				array('%d')
+			);
+		}
 	}
 
 	public function contains_post_content( $array ) {
@@ -366,9 +545,7 @@ class Sync_Posts {
 	 * @since 0.0.0
 	 */
 	public static function send_posts_app( $batches ) {
-
 		foreach ( $batches as $batch ) :
-
 			/**
 			 * $batch is an array of post_id
 			 * Example: [ 3142, 3141, 3140 ]
@@ -388,7 +565,7 @@ class Sync_Posts {
 			 * If there are posts to send
 			 */
 			if ( count( $prepared_posts ) > 0 ) {
-				self::send_group( $prepared_posts, $batch, false );
+				$result = self::send_group( $prepared_posts, $batch, false );
 			}
 
 		endforeach;

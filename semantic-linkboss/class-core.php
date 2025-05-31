@@ -77,11 +77,11 @@ final class Core {
 		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-settings.php';
 		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-dashboard.php';
 		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-notices.php';
+		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-sync-posts.php';
 
 		$api_valid = get_option( 'linkboss_api_key', false );
 
 		if ( $api_valid ) {
-			require_once SEMANTIC_LB_INC_PATH . 'Classes/class-sync-posts.php';
 			require_once SEMANTIC_LB_INC_PATH . 'Classes/class-update-posts.php';
 			require_once SEMANTIC_LB_INC_PATH . 'Classes/class-updates.php';
 			require_once SEMANTIC_LB_INC_PATH . 'Classes/class-cron.php';

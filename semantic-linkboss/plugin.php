@@ -102,6 +102,7 @@ final class Plugin {
 		 */
 		$script_config = array(
 			'rest_url'     => esc_url( get_rest_url() ),
+			'ajax_url'     => admin_url( 'admin-ajax.php' ),
 			'app_api'      => esc_url( SEMANTIC_LB_REMOTE_URL ),
 			'staging'      => ! defined( 'SEMANTIC_LB_STAGING' ) ? true : false,
 			'version'      => SEMANTIC_LB_VERSION,
@@ -119,6 +120,12 @@ final class Plugin {
 		);
 
 		wp_localize_script( 'semantic-linkboss', 'LinkBossConfig', $script_config );
+
+		$ajax_config = array(
+			'ajax_nonce' => wp_create_nonce( 'linkboss_ajax_nonce' ),
+		);
+
+		wp_localize_script( 'semantic-linkboss', 'LinkBossAjax', $ajax_config );
 	}
 
 	/**

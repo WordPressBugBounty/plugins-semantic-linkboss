@@ -231,6 +231,19 @@ class Settings {
 					),
 					200
 				);
+				
+			case 'get_url_list':
+				$linkboss_qb = get_option( 'linkboss_custom_query', '' );
+				$url_list = isset( $linkboss_qb['url_list'] ) ? $linkboss_qb['url_list'] : '';
+
+				return rest_ensure_response(
+					array(
+						'status'   => 'success',
+						'message'  => 'URL list fetched successfully',
+						'url_list' => $url_list,
+					),
+					200
+				);
 			default:
 				return new WP_Error( 'no_settings', esc_html__( 'Oops, Settings is not found.' ), array( 'status' => 404 ) );
 		}
@@ -454,6 +467,12 @@ class Settings {
 	 * @since 2.7.0
 	 */
 	public function save_custom_query( $linkboss_qb ) {
+		// Check if we're syncing by URLs
+		if ( isset( $linkboss_qb['sync_by'] ) && 'urls' === $linkboss_qb['sync_by'] ) {
+			// Store the URL list
+			update_option( 'linkboss_custom_query', $linkboss_qb );
+			return true;
+		}
 
 		$categories   = array();
 		$__categories = array();

@@ -310,8 +310,6 @@ class Cron {
 		// Add check to prevent general hooks (like publish_*) from syncing Elementor posts v2.7.1
 		// The Elementor-specific hook elementor/document/after_save should handle these.
 		if ( self::is_elementor_post( $post_id ) ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( 'LinkBoss Sync (Cron): sync_posts_on_post_update skipped for Elementor post ID: ' . $post_id );
 			return;
 		}
 

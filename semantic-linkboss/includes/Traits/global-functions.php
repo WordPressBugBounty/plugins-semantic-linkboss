@@ -27,11 +27,33 @@ trait Global_Functions {
 	 * @since 2.3.0
 	 */
 	public function get_post_pages( $_post_type = false, $post__in = false, $number_posts = -1, $post_status = array( 'publish' ) ) {
-
+		
+		// Check if we're using URL-based syncing
+		$query_data = get_option('linkboss_custom_query', '');
+		$is_url_sync = isset($query_data['sync_by']) && 'urls' === $query_data['sync_by'];
+		
+		// Special handling for URL-based syncing with specific post IDs
+		if ($is_url_sync && false !== $post__in) {
+			
+			// For URL-based syncing, we need to get the actual post type of each post
+			// rather than using the default post types from the query builder
+			$all_posts = array();
+			
+			$post_ids = is_array($post__in) ? $post__in : array($post__in);
+			
+			foreach ($post_ids as $post_id) {
+				$post = get_post($post_id);
+				if ($post) {
+					$all_posts[] = $post;
+				}
+			}
+			
+			return $all_posts;
+		}
+		
 		/**
 		 * Get data of Custom Query Builder
 		 */
-		$query_data = get_option( 'linkboss_custom_query', '' );
 		$post_type = isset( $query_data['post_sources'] ) && ! empty( $query_data['post_sources'] ) ? $query_data['post_sources'] : array( 'post', 'page' );
 
 		$is_page = in_array( 'page', $post_type ) || ( 'page' === $_post_type ) ? true : false;
@@ -75,7 +97,7 @@ trait Global_Functions {
 		 * Get Posts
 		 */
 		$posts = get_posts( $posts_args );
-
+		
 		$pages = array();
 
 		/**
@@ -98,6 +120,7 @@ trait Global_Functions {
 
 			$pages = get_posts( $page_args );
 			$page_yes = true;
+			
 		}
 
 		/**
@@ -118,6 +141,7 @@ trait Global_Functions {
 
 			if ( false === $page_yes ) {
 				$pages = get_posts( $page_args );
+				
 			}
 		}
 
@@ -143,7 +167,7 @@ trait Global_Functions {
 		 * Merge posts and pages
 		 */
 		$all_posts = array_merge( $posts, $pages );
-
+		
 		return $all_posts;
 	}
 

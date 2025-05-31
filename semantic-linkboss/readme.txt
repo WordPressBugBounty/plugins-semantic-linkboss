@@ -1,246 +1,200 @@
-=== LinkBoss - Semantic Internal Linking ===
-Contributors: zventures, anikyusuf, bdkoder, ahmdsabbir, prapon
+=== LinkBoss - AI-Powered Internal Linking ===
+Contributors: zventures, bdkoder, anikyusuf, ahmdsabbir, prapon
 Donate link: https://linkboss.io/donate
-Tags: SEO, links, internal links, automation, linkboss
+Tags: SEO, internal links, AI linking, automation, linkboss
 Requires at least: 5.6
-Tested up to: 6.7.2
+Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 2.7.7
+Stable tag: 2.7.8
 License: GPLv3 or later
-License URI: https://opensource.org/licenses/GPL-3.0
+License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
 NLP, AI, and Machine Learning-powered semantic interlinking tool. Manual interlinking, bulk interlinking in one click – it does it all.
 
 == Description ==
 
-[**LinkBoss**](https://linkboss.io/) is an advanced internal linking tool designed to optimize your WordPress website's interlinking SEO. By leveraging NLP, AI, and Machine Learning, LinkBoss makes it easy to create semantically relevant internal links, saving you hours of manual work.
-
-Faster and consistent accuracy that no VAs can ever outperform.
-
-Supports manual incoming/outgoing, SILO, and bulk auto internal links. Effortlessly create natural interlinks with AI-generated, NLP-optimized anchors.
+[**LinkBoss**](https://linkboss.io/) is an advanced WordPress internal linking plugin that uses AI, NLP, and machine learning to automatically create semantically relevant internal links. Save hours of manual work while improving your site's SEO performance with intelligent automation.
 
 **What is LinkBoss?**
 
 https://youtu.be/88g3Cl-_UoI
 
-**Features**
-- **NLP, AI, Big Data-Powered Semantic Interlink Suggestions**
-- **Bulk Tool to interlink large sites in minutes**
-- **SILO Structure Creation – Build logical topic clusters**
-- **One Dashboard to Manage All Sites**
-- **Detailed link reports and analytics**
+**Why Choose LinkBoss?**
 
-**Use Cases**
-Whether you’re building an SEO strategy from scratch or optimizing an existing site, LinkBoss can help. Here's how:
+Traditional internal linking is time-consuming and inconsistent. LinkBoss solves this with AI-powered automation that delivers faster, more accurate results than manual linking or virtual assistants.
 
-- **Unified Dashboard** – Manage interlinking, see performance metrics, and monitor updates.
-- **Inbound/Outbound Tools** – Create focused interlinks to boost key pages.
-- **SILO Networks** – Organize content hierarchically for improved SEO and UX.
-- **Archive & Custom Networks** – Build interlinks across archive/tag pages and customized clusters.
-- **Bulk Interlinking** – Save time by linking up to 100 pages in one click.
-- **Anchor Manager** – Visualize and edit anchors to prevent keyword cannibalization.
-- **Site & Links Report** – Fix orphaned pages, dead-ends, and other linking gaps.
-- **Site Visualizer** – View and improve site structure with a graphical map.
+**Key Features**
 
-**LinkBoss Full Demo Walkthrough**
-[youtube https://www.youtube.com/watch?v=bSn3sQdPsh0]
+= AI-Powered Semantic Linking =
+* Advanced NLP algorithms analyze content for contextually relevant link suggestions
+* Machine learning ensures high-quality, semantically appropriate connections
+* Support for 30+ languages for international SEO optimization
+
+= Bulk Operations & Automation =
+* Link up to 200 pages with a single click
+* Automated anchor text optimization prevents keyword cannibalization
+* Custom network builder for bespoke linking strategies
+
+= Advanced Management Tools =
+* **Anchor Manager** - Detect and prevent anchor text cannibalization
+* **Duplicate Link Finder** - Identify and fix duplicate outbound links
+* **SILO Structure Builder** - Create logical topic clusters for better organization
+* **Site Visualizer** - Interactive site map showing orphaned pages and dead ends
+
+= Comprehensive Analytics =
+* Detailed link reports with Link Flow Score analysis
+* Structural issue identification
+* Multi-site management from unified dashboard
+
+= Wide Compatibility =
+Works with popular page builders including Elementor, Beaver Builder, Divi, Bricks, Oxygen, Thrive Architect, and all Gutenberg block editors. Full support for Custom Post Types and ACF Custom Fields.
+
+**Perfect for:**
+* SEO professionals managing multiple sites
+* Content creators building topic authority
+* Agencies optimizing client websites
+* E-commerce sites improving internal navigation
+* Publishers with large content libraries
+
+**How It Works**
+
+1. **Install & Sync** - Connect your site and sync content
+2. **AI Analysis** - Our algorithms analyze your content semantically  
+3. **Smart Suggestions** - Get contextually relevant link recommendations
+4. **One-Click Implementation** - Apply links individually or in bulk
+
+**Demo & Tutorials**
+
+https://youtu.be/bSn3sQdPsh0
 
 == Installation ==
 
-1. Upload the `semantic-linkboss` folder to the `/wp-content/plugins/` directory.
-2. Activate the plugin through the 'Plugins' menu in WordPress.
-3. Configure the plugin settings from the 'LinkBoss' menu in the WordPress admin.
+**Automatic Installation (Recommended)**
+1. Go to Plugins → Add New in your WordPress admin
+2. Search for "LinkBoss"
+3. Click Install Now, then Activate
+
+**Manual Installation**
+1. Download the plugin ZIP file
+2. Upload to `/wp-content/plugins/` directory
+3. Activate through the 'Plugins' menu
+
+**Setup Process**
+1. Get your API key from https://app.linkboss.io
+2. Navigate to WordPress Dashboard → LinkBoss → API Settings
+3. Paste your API key and click Save
+4. Go to Sync tab and click "Prepare Data"
+5. Once prepared, click "Sync Now"
+6. Start linking from https://app.linkboss.io after sync completes
+
+Installation video guide:
+
+https://youtu.be/zVpQ9LfEAAk
 
 == Frequently Asked Questions ==
 
-= How does LinkBoss work? =
-LinkBoss uses advanced algorithms to analyze your content and automatically create internal links that are contextually relevant and beneficial for SEO.
+= How does LinkBoss create internal links? =
 
-= Can I customize the linking rules? =
-Yes, you can customize the linking rules and settings to match your specific needs and preferences.
+LinkBoss uses advanced Natural Language Processing (NLP) and machine learning algorithms to analyze your content semantically. It identifies contextually relevant opportunities for internal links and suggests appropriate anchor text, ensuring each link adds value for both users and search engines.
 
-= Is LinkBoss compatible with other SEO plugins? =
-Yes, LinkBoss integrates seamlessly with popular SEO plugins to enhance your overall SEO strategy.
+= Which page builders are supported? =
 
-= Will my links stay after I remove LinkBoss? =
-Yes, interlinks created by LinkBoss will remain on your site even if you deactivate the plugin.
+LinkBoss works with all major WordPress page builders:
+* **Visual Builders**: Elementor, Beaver Builder, Divi, Bricks, Oxygen, Thrive Architect
+* **Block Editors**: Gutenberg, Spectra, GenerateBlocks, Kadence Blocks, CoBlocks, Otter Blocks, Essential Blocks, Ultimate Blocks
+* **Content Types**: Custom Post Types, ACF Custom Fields, WooCommerce categories
+
+= How do I prevent anchor text cannibalization? =
+
+Use the Anchor Manager (LinkBoss → Anchor Manager) and enable "Find Cannibalized Anchors." This tool identifies when multiple pages target the same keywords and helps you distribute anchor text strategically.
+
+= Can I find and fix duplicate links? =
+
+Yes! Go to LinkBoss → Links Report and enable "Duplicate Link Finder" to identify posts with duplicate outbound links. Remove the ones that aren't necessary.
+
+= Does LinkBoss support multilingual sites? =
+
+Absolutely! LinkBoss supports 30+ languages with tailored semantic analysis for each language, making it perfect for international SEO optimization.
+
+= What happens to my links if I deactivate LinkBoss? =
+
+All internal links created by LinkBoss remain permanently on your site, even after plugin deactivation. Your SEO investment is protected.
+
+= Is there a limit to how many links I can create? =
+
+The bulk tool can process up to 200 pages in a single operation. For larger sites, you can run multiple bulk operations or use the individual linking suggestions.
+
+= How accurate are the AI suggestions? =
+
+Our NLP algorithms are trained on semantic relationships and contextual relevance. The system learns from your content patterns and consistently delivers high-quality suggestions that outperform manual linking in both speed and accuracy.
 
 == Screenshots ==
 
-1. **Dashboard** - Overview of your internal linking performance.
-2. **Sync** - Customize your linking rules and preferences.
-3. **Settings** - Customize your linking rules and preferences.
-4. **Reports** - Detailed analytics and reports on your internal links.
+1. **Tools Page** - Comprehensive interface with options for Inbound, Outbound, Silo, Archive Silo, Custom Network, Bulk, and Anchor Manager
+2. **Site Report** - Performance metrics showing page counts, post counts, link statistics, and visual analytics
+3. **Anchor Manager** - Detect cannibalization and manage anchor text distribution with visual analytics and filtering options
+4. **Site Visualizer** - Interactive site map showing link structure and orphaned content with color-coded nodes
+5. **Link Report Table** - Comprehensive link analysis with Link Flow Score and duplicate link detection
+6. **SILO Builder** - Create logical content hierarchies and topic clusters with support URL management
+7. **Silo Linking Table** - Manage and implement links within SILO structures with source-target relationships
+8. **SILO Visualization** - Interactive hub-and-spoke diagram showing content relationships within a topic cluster
+9. **Bulk Linking Interface** - Process up to 200 pages with AI-suggested connections and similarity scoring
+10. **Contextual Link Creator** - AI-powered paragraph selection with semantic similarity analysis for optimal anchor text placement
 
 == Changelog ==
 
-= 2.7.6 [24th May 2025] =
+= 2.7.8 [May 31, 2025] =
+* Added: Sync contents by custom URL
+* Fixed: URL Extractor tool bug resolution
 
-Fixed: Bug fixed for Advanced Sync Settings
+= 2.7.7 [May 28, 2025] =
+* Fixed: Advanced Sync Settings bug resolution
 
-= 2.7.5 [24th May 2025] =
+= 2.7.6 [May 28, 2025] =
+* Added: URL Extractor tool for bulk operations
+* Improved: Enhanced UI for Sync and Advanced Sync Settings
 
-Added: ACF custom field support (beta)
-Added: WooCommerce category support (beta)
-Improved: Prepare Post animation
-Improved: Cache management for Elementor
+= 2.7.5 [May 28, 2025] =
+* Added: ACF custom field support (beta)
+* Added: WooCommerce category support (beta)
+* Improved: Enhanced post preparation animation
+* Improved: Optimized cache management for Elementor
 
+= 2.7.4 [March 25, 2025] =
+* Added: Post count-based sync speed optimization
+* Improved: Enhanced cron job performance
+* Improved: Faster sync processing
+* Improved: Socket token security enhancement
+* Deprecated: KB-based sync speed (replaced with post count method)
 
-= 2.7.4 [25th March 2025] =
+= 2.7.3 [March 9, 2025] =
+* Updated: GET requests converted to POST for better security
+* Improved: System-wide performance enhancements
 
-Added: Post Count base Sync Speed
-Improved: Cron improved
-Improved: Sync Speed improved
-Improved: Socket Token improved
-Deprecated: KB base Sync Speed
+= 2.7.2 [February 25, 2025] =
+* Fixed: Post update issue in Socket PATCH requests
 
-= 2.7.3 [9th March 2025] =
+= 2.7.1 [February 23, 2025] =
+* Fixed: Category synchronization bug resolution
 
-Updated: GET request updated to POST
-Improved: System-wide enhancements for better performance
+= 2.7.0 [February 21, 2025] =
+* Added: Complete UI redesign with modern interface
+* Added: Beaver Builder support
+* Added: WPML multilingual support
+* Improved: System-wide performance optimizations
 
-= 2.7.2 [25th February 2025] =
+[View complete changelog](https://linkboss.io/changelog)
 
-Fixed: Post update issue fixed (Patch request in Socket)
+== Upgrade Notice ==
 
-= 2.7.1 [23th February 2025] =
+= 2.7.8 =
+Enhanced URL management with custom sync capabilities and improved url extractor tool. Recommended update for better workflow efficiency.
 
-Fixed: Category sync fixed
+== Privacy Policy ==
 
-= 2.7.0 [21th February 2025] =
+LinkBoss processes your content to provide semantic linking suggestions. For complete privacy details, visit https://linkboss.io/privacy-policy
 
-Added: Completely redesigned UI interface
-Added: Beaver Builder Support added
-Added: WPML Support added
-Improved: System-wide enhancements for better performance
+== Support ==
 
-= 2.6.3 [29th November 2024] =
-
-Added: Flush object cache for updated post
-Improved: Cron Message dismissed improved (Thanks to Dan Coviello)
-
-= 2.6.2 [26th November 2024] =
-
-Improved: Elementor Meta Data improved
-Improved: System Improved
-Improved: Cron Improved
-Added: News & Updates feed added
-Fixed: Error Log removed
-
-= 2.6.0 [19th November 2024] =
-
-Added: Thrive Builder Support added
-Improved: System Improved
-Improved: Bricks Builder Improved
-
-= 2.5.3 [3rd November 2024] =
-
-Fixed: Query Builder issue fixed
-Fixed: SQL Query improved
-
-= 3 [12th October 2024] =
-
-Improved: Plugin shifted to Wp.org
-
-= 2.5.0 [30th September 2024] =
-
-Added: Bricks Builder Support added
-Added: Oxygen Builder Support added
-Added: Sync Logs added
-Added: LinkBoss Connected signal added in Header
-Added: Sync Speed Setting added
-Added: Builder Detected feature added
-Fixed: Authentication issue fixed
-
-= 2.4.0 [1st August 2024] =
-
-Added: Divi Builder Support added
-Added: Notice close Button Added
-Improved: Elementor Builder Improved
-Improved: System Improved
-
-= 2.3.3 [8th June 2024] =
-
-Fixed: All categories issue fixed in Custom Query Builder
-
-= 2.3.2 [4th June 2024] =
-
-Fixed: Rank Math Entities issue fixed
-Improved: Sync system improved
-Improved: Auth system improved
-
-= 2.3.1 [30th May 2024] =
-
-Fixed: Page duplicate sync issue fixed
-
-= 2.3.0 [20th May 2024] =
-
-Added: Custom Query Builder added
-Updated: Force SYNC updated
-Updated: Reports updated
-Improved: Overall System Improved.
-
-= 2.2.6 [9th April 2024] =
-
-Fixed: Elementor Themes Builder Conflict issue fixed
-Updated: System Improved
-
-= 2.2.5 [24th Mar 2024] =
-
-Fixed: Dashboard report not showing issue fixed
-
-= 2.2.4 [24th Mar 2024] =
-
-Fixed: Multisite / Network Sites issue fixed 
-
-= 2.2.3 [20th Mar 2024] =
-
-Fixed: Elementor Old link lost issue fixed
-Fixed: Initial issue fixed in Settings Page
-Updated: Database column updated
-
-= 2.2.2 [12th Mar 2024] =
-
-Fixed: Remaining Data invalid issue fixed
-Improved: Live notification
-
-= 2.2.1 [11th Mar 2024] =
-
-Fixed: Draft to Publish sync issue fixed
-Fixed: Classic Editor Conflict with Elementor fixed
-Fixed: Wrong credit shown issue fixed
-
-= 2.2.0 [05 Mar 2024] =
-
-Added: Elementor Support added
-Fixed: Object Cache issue fixed
-Fixed: GET & PATCH loop issue fixed
-
-= 2.1.0 [07 Dec 2023] =
-
-Improved: Post sync system improved
-
-= 2.0.9 [05 Dec 2023] =
-
-Fixed: Minor System issue fixed
-
-= 2.0.8 [04 Dec 2023] =
-
-Fixed: File Conflict issue fixed
-
-= 2.0.7 [04 Dec 2023] =
-
-Added: Initial / Ready your Database for Sync Batch
-Fixed: Auto Update issue fixed
-
-= 2.0.6 [03 Dec 2023] =
-
-Improved: System Improved.
-
-= 2.0.3 [30 Nov 2023] =
-
-Added: Ajax sync feature added
-
-== License ==
-
-This plugin is licensed under the GPLv3 or later. For more information, see [GPL-3.0 License](https://opensource.org/licenses/GPL-3.0).
+* **Knowledgebase**: https://linkboss.io/knowledgebase/
+* **Video Tutorials**: https://www.youtube.com/playlist?list=PL2nJTXNFP_H97wxOIKWWABBLzCmQM1tQ5

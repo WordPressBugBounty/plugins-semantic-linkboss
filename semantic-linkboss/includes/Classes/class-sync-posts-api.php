@@ -172,7 +172,6 @@ class Sync_Posts_Api extends Sync_Posts {
 			) );
 
 			if ( is_wp_error( $categories ) ) {
-				// error_log( 'Error retrieving terms: ' . $categories->get_error_message() );
 				return; // Exit if there's an error
 			}
 
@@ -200,7 +199,6 @@ class Sync_Posts_Api extends Sync_Posts {
 			$response = $this->send_group( $categories_data, '', false );
 
 			if ( is_wp_error( $response ) ) {
-				// error_log( 'Error sending group: ' . $response->get_error_message() );
 				return;
 			}
 		}
@@ -350,6 +348,15 @@ class Sync_Posts_Api extends Sync_Posts {
 		$pages      = isset( $params['pages'] ) ? (int) sanitize_text_field( wp_unslash( $params['pages'] ) ) : 0;
 		$sync_done  = isset( $params['sync_done'] ) ? (int) sanitize_text_field( wp_unslash( $params['sync_done'] ) ) : 0;
 		$force_data = isset( $params['force_data'] ) ? sanitize_text_field( wp_unslash( $params['force_data'] ) ) : false;
+		$sync_method = isset( $params['sync_method'] ) ? sanitize_text_field( wp_unslash( $params['sync_method'] ) ) : 'post_types';
+
+		// Check if we're using URL-based syncing
+		$is_url_sync = ($sync_method === 'urls');
+		
+		// For URL-based syncing, we need to ensure posts is not 0
+		if ($is_url_sync && $posts <= 0) {
+			return new WP_Error( 'error', esc_html__( 'You can not sync 0 URLs! Prepare the data first!', 'semantic-linkboss' ), array( 'status' => 400 ) );
+		}
 
 		// Check if WooCommerce category sync is enabled
 		$woo_enabled = get_option( 'linkboss_woo_enabled', false );
@@ -387,10 +394,11 @@ class Sync_Posts_Api extends Sync_Posts {
 		);
 
 		$body = array(
-			'posts'    => $woo_enabled ? $posts + $category : $posts, // Only include category count if WooCommerce sync is enabled
-			'pages'    => $pages,
-			'category' => $category,
+			'posts'    => $is_url_sync ? $posts : ($woo_enabled ? $posts + $category : $posts), // For URL sync, use the URL count directly
+			'pages'    => $is_url_sync ? 0 : $pages, // For URL sync, pages is always 0
+			'category' => $is_url_sync ? 0 : $category, // For URL sync, category is always 0
 			'status'   => $status,
+			'sync_method' => $sync_method, // Include the sync method in the API call
 		);
 
 		$arg = array(
