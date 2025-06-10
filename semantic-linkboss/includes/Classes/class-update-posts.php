@@ -485,9 +485,46 @@ class Update_Posts {
 				update_post_meta( $post_id, '_elementor_data', $encoded_meta );
 				$post_updated = true;
 			} elseif ( isset( $post_data['builder'] ) && 'bricks' === $post_data['builder'] && isset( $post_data['meta'] ) ) {
-				// Handle Bricks
-				update_post_meta( $post_id, '_bricks_page_content_2', wp_slash( $post_data['meta'] ) );
-				$post_updated = true; // Mark as updated
+				// Handle Bricks - Using direct $wpdb update
+				$value_to_save = $post_data['meta']; 
+
+				if (is_array($value_to_save)) {
+					$value_to_save = serialize($value_to_save);
+				}
+
+				global $wpdb;
+				$meta_table = $wpdb->postmeta;
+				$meta_key_to_update = '_bricks_page_content_2';
+				
+				$data_for_db = array(
+					'meta_value' => $value_to_save 
+				);
+				$where_clause = array(
+					'post_id'  => $post_id,
+					'meta_key' => $meta_key_to_update
+				);
+				
+				$existing_meta_id = $wpdb->get_var( $wpdb->prepare( 
+					"SELECT meta_id FROM $meta_table WHERE post_id = %d AND meta_key = %s", 
+					$post_id, 
+					$meta_key_to_update 
+				) );
+				
+				$result = false;
+				if ( $existing_meta_id ) {
+					$result = $wpdb->update( $meta_table, $data_for_db, $where_clause );
+				} else {
+					$data_for_insert = array_merge( $data_for_db, array(
+						'post_id'  => $post_id,
+						'meta_key' => $meta_key_to_update
+					) );
+					$result = $wpdb->insert( $meta_table, $data_for_insert );
+				}
+				
+				if (false !== $result) { 
+					wp_cache_delete($post_id, 'post_meta'); 
+				}
+				$post_updated = (false !== $result); 
 			} elseif ( isset( $post_data['builder'] ) && 'oxygen' === $post_data['builder'] && isset( $post_data['meta'] ) ) {
 				// Handle Oxygen
 				$meta_exists = get_post_meta( $post_id, '_ct_builder_json', true );

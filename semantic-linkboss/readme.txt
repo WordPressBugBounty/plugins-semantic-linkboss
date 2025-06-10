@@ -5,7 +5,7 @@ Tags: SEO, internal links, AI linking, automation, linkboss
 Requires at least: 5.6
 Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 2.7.8
+Stable tag: 2.7.9
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -28,7 +28,7 @@ Traditional internal linking is time-consuming and inconsistent. LinkBoss solves
 = AI-Powered Semantic Linking =
 * Advanced NLP algorithms analyze content for contextually relevant link suggestions
 * Machine learning ensures high-quality, semantically appropriate connections
-* Support for 30+ languages for international SEO optimization
+* Support for 30+ languages including English, Spanish, German, Dutch, French, Portuguese, Indonesian, Romanian, Italian, Danish, Finnish, Swedish, Tagalog, Traditional Chinese, Simplified Chinese, Malay, Polish, Russian, Bulgarian, Turkish, Czech, Hungarian, Serbian, Slovak, Arabic, Norwegian, Greek, and Ukrainian for international SEO optimization
 
 = Bulk Operations & Automation =
 * Link up to 200 pages with a single click
@@ -80,12 +80,12 @@ https://youtu.be/bSn3sQdPsh0
 3. Activate through the 'Plugins' menu
 
 **Setup Process**
-1. Get your API key from https://app.linkboss.io
+1. Get your API key from [https://app.linkboss.io](https://app.linkboss.io)
 2. Navigate to WordPress Dashboard → LinkBoss → API Settings
 3. Paste your API key and click Save
 4. Go to Sync tab and click "Prepare Data"
 5. Once prepared, click "Sync Now"
-6. Start linking from https://app.linkboss.io after sync completes
+6. Start linking from [https://app.linkboss.io](https://app.linkboss.io) after sync completes
 
 Installation video guide:
 
@@ -115,6 +115,11 @@ Yes! Go to LinkBoss → Links Report and enable "Duplicate Link Finder" to ident
 = Does LinkBoss support multilingual sites? =
 
 Absolutely! LinkBoss supports 30+ languages with tailored semantic analysis for each language, making it perfect for international SEO optimization.
+* **European Languages**: English, Spanish, German, Dutch, French, Portuguese, Romanian, Italian, Danish, Finnish, Swedish, Polish, Russian, Bulgarian, Turkish, Czech, Hungarian, Serbian, Slovak, Norwegian, Greek, Ukrainian
+* **Asian Languages**: Traditional Chinese, Simplified Chinese, Indonesian, Malay, Tagalog
+* **Middle Eastern Languages**: Arabic
+
+More languages are being added regularly to expand international SEO capabilities.
 
 = What happens to my links if I deactivate LinkBoss? =
 
@@ -142,6 +147,12 @@ Our NLP algorithms are trained on semantic relationships and contextual relevanc
 10. **Contextual Link Creator** - AI-powered paragraph selection with semantic similarity analysis for optimal anchor text placement
 
 == Changelog ==
+
+= 2.7.9 [June 10, 2025] =
+* Added: Get updates from the LinkBoss app manually
+* Fixed: Elementor empty content bug resolution
+* Fixed: Bricks content update bug
+
 
 = 2.7.8 [May 31, 2025] =
 * Added: Sync contents by custom URL
@@ -187,14 +198,14 @@ Our NLP algorithms are trained on semantic relationships and contextual relevanc
 
 == Upgrade Notice ==
 
-= 2.7.8 =
-Enhanced URL management with custom sync capabilities and improved url extractor tool. Recommended update for better workflow efficiency.
+= 2.7.9 =
+Added the option to Sync contents from the LinkBoss app if cron is disabled or not working. Recommended update for better workflow efficiency for Elementor and Bricks builder.
 
 == Privacy Policy ==
 
-LinkBoss processes your content to provide semantic linking suggestions. For complete privacy details, visit https://linkboss.io/privacy-policy
+LinkBoss processes your content to provide semantic linking suggestions. For complete privacy details, visit [https://linkboss.io/privacy-policy](https://linkboss.io/privacy-policy)
 
 == Support ==
 
-* **Knowledgebase**: https://linkboss.io/knowledgebase/
-* **Video Tutorials**: https://www.youtube.com/playlist?list=PL2nJTXNFP_H97wxOIKWWABBLzCmQM1tQ5
+* **Knowledgebase**: [https://linkboss.io/knowledgebase](https://linkboss.io/knowledgebase)
+* **Video Tutorials**: [Check Our Playlist](https://www.youtube.com/playlist?list=PL2nJTXNFP_H97wxOIKWWABBLzCmQM1tQ5)
