@@ -787,7 +787,7 @@ class Sync_Posts {
 									'custom_field_name' => $item['custom_field_name'],
 								);
 							}, $acf_json_structure ),
-							( is_string( $elementor_data[0] ) ? json_decode( $elementor_data[0], true ) : $elementor_data[0] ) ?: array()
+							( is_string( $elementor_data_json ) ? json_decode( $elementor_data_json, true ) : json_decode( $elementor_data_json, true ) ) ?: array()
 						);
 						$acf_content = $this->generate_html_from_meta( array(
 							'original_post_content' => '',
@@ -812,7 +812,7 @@ class Sync_Posts {
 
 				switch ( $builder_type ) {
 					case 'elementor':
-						$meta = $elementor_data[0];
+						$meta = $elementor_data_json;
 						break;
 					case 'bricks':
 						$meta = isset( $bricks_meta ) ? $bricks_meta : null;

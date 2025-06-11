@@ -244,6 +244,37 @@ class Settings {
 					),
 					200
 				);
+				
+			case 'get_post_id_from_url':
+				$url = isset( $params['url'] ) ? esc_url_raw( $params['url'] ) : '';
+				
+				if ( empty( $url ) ) {
+					return new WP_Error( 'no_url', esc_html__( 'URL is required.', 'semantic-linkboss' ), array( 'status' => 400 ) );
+				}
+				
+				// Use the enhanced_url_to_postid function from Sync_Posts class
+				$sync_posts = new Sync_Posts();
+				$post_id = $sync_posts->enhanced_url_to_postid( $url );
+				
+				if ( ! $post_id ) {
+					return rest_ensure_response(
+						array(
+							'status'  => 'error',
+							'message' => sprintf( esc_html__( 'No post found for URL: %s', 'semantic-linkboss' ), $url ),
+							'post_id' => 0,
+						),
+						200
+					);
+				}
+				
+				return rest_ensure_response(
+					array(
+						'status'  => 'success',
+						'message' => esc_html__( 'Post ID found successfully', 'semantic-linkboss' ),
+						'post_id' => $post_id,
+					),
+					200
+				);
 			default:
 				return new WP_Error( 'no_settings', esc_html__( 'Oops, Settings is not found.' ), array( 'status' => 404 ) );
 		}

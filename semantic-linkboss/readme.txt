@@ -5,7 +5,7 @@ Tags: SEO, internal links, AI linking, automation, linkboss
 Requires at least: 5.6
 Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 2.7.9
+Stable tag: 2.8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -148,11 +148,14 @@ Our NLP algorithms are trained on semantic relationships and contextual relevanc
 
 == Changelog ==
 
+= 2.8.0 [June 12, 2025] =
+* Added: Option to remove synced URLs
+* Fixed: Elementor bug fix
+
 = 2.7.9 [June 10, 2025] =
 * Added: Get updates from the LinkBoss app manually
 * Fixed: Elementor empty content bug resolution
 * Fixed: Bricks content update bug
-
 
 = 2.7.8 [May 31, 2025] =
 * Added: Sync contents by custom URL
@@ -198,8 +201,8 @@ Our NLP algorithms are trained on semantic relationships and contextual relevanc
 
 == Upgrade Notice ==
 
-= 2.7.9 =
-Added the option to Sync contents from the LinkBoss app if cron is disabled or not working. Recommended update for better workflow efficiency for Elementor and Bricks builder.
+= 2.8.0 =
+Added the option to removed synced contents from the LinkBoss app by URLs. Added fix for an Elementor bug.
 
 == Privacy Policy ==
 
