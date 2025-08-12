@@ -5,7 +5,7 @@ Tags: SEO, internal links, AI linking, automation, linkboss
 Requires at least: 5.6
 Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 2.8.0
+Stable tag: 2.8.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -35,10 +35,18 @@ Traditional internal linking is time-consuming and inconsistent. LinkBoss solves
 * Automated anchor text optimization prevents keyword cannibalization
 * Custom network builder for bespoke linking strategies
 
+= One-Click Silo Automation =
+* **Reverse Silo** - Automatically create bottom-up linking structures for enhanced topic authority
+* **Serial Silo** - Build sequential linking patterns for step-by-step content flows
+* **Priority Silo** - Implement hierarchical structures based on content importance
+* **Circle Jerk Silo** - Create circular feedback loops for maximum link equity distribution
+* One-click implementation through the Custom Network tool
+* Visual network diagrams show linking relationships and content hierarchy
+
 = Advanced Management Tools =
 * **Anchor Manager** - Detect and prevent anchor text cannibalization
 * **Duplicate Link Finder** - Identify and fix duplicate outbound links
-* **SILO Structure Builder** - Create logical topic clusters for better organization
+* **SILO Structure Builder** - Create logical topic clusters and manage content hierarchies for better organization
 * **Site Visualizer** - Interactive site map showing orphaned pages and dead ends
 
 = Comprehensive Analytics =
@@ -61,7 +69,7 @@ Works with popular page builders including Elementor, Beaver Builder, Divi, Bric
 1. **Install & Sync** - Connect your site and sync content
 2. **AI Analysis** - Our algorithms analyze your content semantically  
 3. **Smart Suggestions** - Get contextually relevant link recommendations
-4. **One-Click Implementation** - Apply links individually or in bulk
+4. **One-Click Implementation** - Apply links individually, in bulk, or with automated silo structures
 
 **Demo & Tutorials**
 
@@ -145,8 +153,15 @@ Our NLP algorithms are trained on semantic relationships and contextual relevanc
 8. **SILO Visualization** - Interactive hub-and-spoke diagram showing content relationships within a topic cluster
 9. **Bulk Linking Interface** - Process up to 200 pages with AI-suggested connections and similarity scoring
 10. **Contextual Link Creator** - AI-powered paragraph selection with semantic similarity analysis for optimal anchor text placement
+11. **Custom Network Builder - One-Click Silo Options** - Interface showing automated silo structure options (Reverse Silo, Serial Silo, Priority Silo, Circle Jerk Silo) with network configuration panel
+12. **Reverse Silo Structure Visualization** - Interactive network diagram displaying hierarchical content relationships with color-coded levels and visual linking patterns
 
 == Changelog ==
+
+= 2.8.1 [August 12, 2025] =
+* Added: One-click silo implementation with four automated structures (Reverse Silo, Serial Silo, Priority Silo, Circle Jerk Silo) through Custom Network tool
+* Fixed: ACF and Elementor Compatibility
+* Improved: System-wide performance optimizations
 
 = 2.8.0 [June 12, 2025] =
 * Added: Option to remove synced URLs
@@ -201,8 +216,8 @@ Our NLP algorithms are trained on semantic relationships and contextual relevanc
 
 == Upgrade Notice ==
 
-= 2.8.0 =
-Added the option to removed synced contents from the LinkBoss app by URLs. Added fix for an Elementor bug.
+= 2.8.1 =
+Added fix for Elementor contents that use ACF custom fields.
 
 == Privacy Policy ==
 

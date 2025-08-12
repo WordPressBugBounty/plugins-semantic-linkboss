@@ -610,7 +610,7 @@ class Sync_Posts {
 							$elementor_data_json = $elementor_data_values[0]; // This is the JSON string
 
 							// Ensure the JSON string is not empty and not just an empty array '[]'
-							if ( ! empty( trim( $elementor_data_json ) ) && $elementor_data_json !== '[]' ) {
+							if ( is_string($elementor_data_json) && ! empty( trim( $elementor_data_json ) ) && $elementor_data_json !== '[]' ) {
 								// Further validation: try to decode and check if it's a non-empty array
 								$decoded_data = json_decode( $elementor_data_json, true );
 								if ( json_last_error() === JSON_ERROR_NONE && is_array( $decoded_data ) && ! empty( $decoded_data ) ) {
@@ -625,6 +625,8 @@ class Sync_Posts {
 										array(
 											'/<style\b[^>]*>(.*?)<\/style>/is',
 											'/<div class="elementor-post__card">.*?<\/div>/is',
+											'/<div\s+[^>]*class="[^"]*\belementor-widget-posts\b[^"]*"[^>]*>(?:.|\s)*?<\/div>\s*<\/div>\s*<\/div>/is',
+											'/<div\s[^>]*class="[^"]*\belementor-shortcode\b[^"]*"[^>]*>.*?<\/div>/is',
 										),
 										'',
 										$rendered_content
@@ -794,6 +796,7 @@ class Sync_Posts {
 							'acf_builder'           => $acf_json_structure,
 						) );
 						$rendered_content .= $acf_content;
+                        $rendered_content = str_replace('&#039;', '\'', $rendered_content);
 					} elseif ( ! $builder_type && $acf_fields_present ) { // Check if ACF fields were actually processed
 						// Handle Gutenberg with ACF (no builder detected)
 						$builder_type = 'classic'; // Treat Gutenberg with ACF as Classic
@@ -812,7 +815,14 @@ class Sync_Posts {
 
 				switch ( $builder_type ) {
 					case 'elementor':
-						$meta = $elementor_data_json;
+						// Check if this is ACF-Elementor combination
+						if ( $post_type === 'acf-elementor' && ! empty( $acf_json_structure ) ) {
+							// Keep the merged meta structure for ACF-Elementor
+							// $meta already contains the merged ACF+Elementor data from above
+						} else {
+							// Regular Elementor without ACF
+							$meta = $elementor_data_json;
+						}
 						break;
 					case 'bricks':
 						$meta = isset( $bricks_meta ) ? $bricks_meta : null;
@@ -876,10 +886,26 @@ class Sync_Posts {
 						$post_url = get_permalink( $translated_post_id );
 					}
 				}
+				
+				// Get categories based on post type
+				$category_ids = array();
+				
+				if ( $post->post_type === 'product' ) {
+					// Get WooCommerce product categories
+					$product_categories = wp_get_post_terms( $post->ID, 'product_cat', array( 'fields' => 'ids' ) );
+					$category_ids = is_wp_error( $product_categories ) ? array() : $product_categories;
+				} elseif ( $post->post_type === 'post' ) {
+					// Use regular post categories
+					$category_ids = is_array( $post->post_category ) ? $post->post_category : array();
+				} else {
+					// For other post types, try to get categories from 'category' taxonomy
+					$post_categories = wp_get_post_terms( $post->ID, 'category', array( 'fields' => 'ids' ) );
+					$category_ids = is_wp_error( $post_categories ) ? array() : $post_categories;
+				}
 
 				return array(
 					'_postId'    => $post->ID,
-					'category'   => wp_json_encode( $post->post_category ),
+					'category'   => wp_json_encode( $category_ids ),
 					'title'      => $post->post_title,
 					'content'    => isset( $rendered_content ) ? $rendered_content : $post->post_content,
 					'postType'   => $post_type,
