@@ -285,10 +285,19 @@ class Update_Posts {
 	 * @return string The extracted classic content.
 	 */
 	private static function extract_classic_content( $html_content ) {
-		$pattern = '/<div class="classic-post-content">(.*?)<\/div>/s';
+		// First try to match content with the comment marker
+		$pattern = '/<div class="classic-post-content">(.*?)<!-- END-CLASSIC-CONTENT --><\/div>/s';
 		if ( preg_match( $pattern, $html_content, $matches ) ) {
 			return $matches[1];
 		}
+		
+		// Fallback to the original pattern if the comment marker is not found
+		// This ensures backward compatibility with existing content
+		$fallback_pattern = '/<div class="classic-post-content">(.*?)<\/div>/s';
+		if ( preg_match( $fallback_pattern, $html_content, $matches ) ) {
+			return $matches[1];
+		}
+		
 		return '';
 	}
 

@@ -104,6 +104,16 @@ class Settings {
 				'permission_callback' => array( $this, 'update_permissions_check' ),
 			)
 		);
+
+		register_rest_route(
+			$this->namespace,
+			'/proxy-sync',
+			array(
+				'methods'             => WP_REST_Server::EDITABLE,
+				'callback'            => array( $this, 'proxy_sync' ),
+				'permission_callback' => array( $this, 'update_permissions_check' ),
+			)
+		);
 	}
 
 	/**
@@ -399,6 +409,73 @@ class Settings {
 	 */
 	public function update_permissions_check() {
 		return current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Proxy sync requests to LinkBoss API
+	 * This bypasses CORS issues by proxying through WordPress
+	 *
+	 * @since 2.7.0
+	 */
+	public function proxy_sync( WP_REST_Request $request ) {
+		// Get the request body (posts data)
+		$body = $request->get_body();
+		
+		// Get access token from Auth class
+		$access_token = Auth::get_access_token();
+		
+		if ( ! $access_token ) {
+			return new WP_Error( 
+				'no_access_token', 
+				esc_html__( 'Access token not found. Please authenticate first.', 'semantic-linkboss' ), 
+				array( 'status' => 401 ) 
+			);
+		}
+		
+		// Prepare headers for the LinkBoss API request
+		$headers = array(
+			'Content-Type'     => 'application/json',
+			'Authorization'    => "Bearer $access_token",
+			'X-PLUGIN-VERSION' => defined( 'SEMANTIC_LB_VERSION' ) ? SEMANTIC_LB_VERSION : '1.0.0',
+		);
+		
+		// Make the request to LinkBoss API
+		$response = wp_remote_post(
+			'https://api.linkboss.io/api/v2/wp/sync',
+			array(
+				'headers' => $headers,
+				'body'    => $body,
+				'timeout' => 30,
+			)
+		);
+		
+		// Check for errors
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 
+				'proxy_error', 
+				$response->get_error_message(), 
+				array( 'status' => 500 ) 
+			);
+		}
+		
+		// Get response details
+		$response_body = wp_remote_retrieve_body( $response );
+		$status_code   = wp_remote_retrieve_response_code( $response );
+		
+		// Handle 401 Unauthorized - try to refresh token
+		if ( 401 === $status_code ) {
+			Auth::get_tokens_by_auth_code();
+			return new WP_Error( 
+				'unauthorized', 
+				esc_html__( 'Unauthorized. Please try again.', 'semantic-linkboss' ), 
+				array( 'status' => 401 ) 
+			);
+		}
+		
+		// Decode and return the response
+		$decoded_body = json_decode( $response_body, true );
+		
+		return new WP_REST_Response( $decoded_body, $status_code );
 	}
 
 	/**

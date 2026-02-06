@@ -497,12 +497,12 @@ class Sync_Posts {
 	private function generate_html_from_meta( $meta ) {
 		$html = '<div class="acf-classic-builder-content">';
 
-		// Add Classic post content only if present
-		if ( ! empty( $meta['original_post_content'] ) ) {
-			$html .= '<div class="classic-post-content">';
-			$html .= $meta['original_post_content'];
-			$html .= '</div>';
-		}
+    // Add Classic post content only if present
+    if ( ! empty( $meta['original_post_content'] ) ) {
+        $html .= '<div class="classic-post-content">';
+        $html .= $meta['original_post_content'];
+        $html .= '<!-- END-CLASSIC-CONTENT --></div>';
+    }
 
 		// Add ACF builder items
 		if ( ! empty( $meta['acf_builder'] ) ) {
@@ -520,7 +520,7 @@ class Sync_Posts {
 					$html .= wp_kses_post( $content );
 				} else {
 					$tag     = 'p';
-					$content = esc_html( $content );
+					$content = wp_kses_post( $content );
 					$html .= sprintf(
 						'<%s class="custom-field-content">%s</%s>',
 						$tag,
@@ -597,28 +597,27 @@ class Sync_Posts {
 				}
 
 				if ( defined( 'SEMANTIC_LB_ELEMENTOR' ) ) {
-					// Check 1: _elementor_edit_mode meta key must exist.
-					// get_post_meta without a third 'true' argument returns an array of values.
-					// If the key exists, the array won't be empty.
+					// Get the _elementor_edit_mode meta values
 					$elementor_edit_mode_values = get_post_meta( $post->ID, '_elementor_edit_mode' );
 
-					if ( ! empty( $elementor_edit_mode_values ) ) { // True if _elementor_edit_mode key exists
-						// Check 2: _elementor_data meta key must exist and contain actual, non-empty JSON data.
+					// Proceed only if _elementor_edit_mode exists AND has a non-empty value
+					if ( isset( $elementor_edit_mode_values[0] ) && trim( $elementor_edit_mode_values[0] ) !== '' ) {
+
+						// Now check _elementor_data
 						$elementor_data_values = get_post_meta( $post->ID, '_elementor_data' );
 
 						if ( ! empty( $elementor_data_values ) && isset( $elementor_data_values[0] ) ) {
-							$elementor_data_json = $elementor_data_values[0]; // This is the JSON string
+							$elementor_data_json = $elementor_data_values[0];
 
-							// Ensure the JSON string is not empty and not just an empty array '[]'
-							if ( is_string($elementor_data_json) && ! empty( trim( $elementor_data_json ) ) && $elementor_data_json !== '[]' ) {
-								// Further validation: try to decode and check if it's a non-empty array
+							if ( is_string( $elementor_data_json ) && ! empty( trim( $elementor_data_json ) ) && $elementor_data_json !== '[]' ) {
 								$decoded_data = json_decode( $elementor_data_json, true );
-								if ( json_last_error() === JSON_ERROR_NONE && is_array( $decoded_data ) && ! empty( $decoded_data ) ) {
-									// All checks passed, this is likely a genuine Elementor post
-									$builder_type = 'elementor';
-									$meta         = $elementor_data_json; // Store the raw JSON string as meta
 
-									// Original Elementor content processing logic starts here
+								if ( json_last_error() === JSON_ERROR_NONE && is_array( $decoded_data ) && ! empty( $decoded_data ) ) {
+									// ✅ Genuine Elementor post
+									$builder_type = 'elementor';
+									$meta         = $elementor_data_json;
+
+									// Render Elementor content
 									$rendered_content = \Elementor\Plugin::$instance->frontend->get_builder_content( $post->ID, false );
 
 									$rendered_content = preg_replace(
@@ -634,57 +633,34 @@ class Sync_Posts {
 
 									$rendered_content = str_replace(
 										array(
-											'&#8211;',
-											'&#8212;',
-											'&#8216;',
-											'&#8217;',
-											'&#8220;',
-											'&#8221;',
-											'&#8722;',
-											'&#8230;',
-											'&#34;',
-											'&#36;',
-											'&#39;',
-											'"',
-											'"',
+											'&#8211;', '&#8212;', '&#8216;', '&#8217;', '&#8220;', '&#8221;',
+											'&#8722;', '&#8230;', '&#34;', '&#36;', '&#39;', '"', '"',
 										),
 										array(
-											'–',
-											'—',
-											'\'',
-											'\'',
-											'"',
-											'"',
-											'−',
-											'…',
-											'"',
-											'$',
-											'\'',
-											'"',
-											'"',
+											'–', '—', '\'', '\'', '"', '"',
+											'−', '…', '"', '$', '\'', '"', '"',
 										),
 										$rendered_content
 									);
 
-									// Ensure span style attributes end with a semicolon.
+									// Ensure span styles end with semicolon
 									$rendered_content = preg_replace_callback(
 										'/(<span\s+style=")([^"]*)(")/i',
 										function( $matches ) {
 											$style_content = $matches[2];
 											if ( ! empty( $style_content ) && substr( rtrim( $style_content ), -1 ) !== ';' ) {
 												return $matches[1] . $style_content . ';' . $matches[3];
-											} else {
-												return $matches[0];
 											}
+											return $matches[0];
 										},
 										$rendered_content
 									);
-									// $meta was already set to $elementor_data_json
 								}
 							}
 						}
 					}
 				}
+
 
 				if ( class_exists( 'ET_Builder_Module' ) ) {
 					$is_builder_used = get_post_meta( $post->ID, '_et_pb_use_builder', true ) === 'on';
