@@ -222,6 +222,8 @@ class Auth {
 			self::set_access_token( $response_body->access );
 		}
 
+		delete_option( 'linkboss_site_disconnected' );
+
 		update_option( 'linkboss_api_key', $api_key );
 
 		/**
@@ -320,6 +322,11 @@ class Auth {
 		$res_body = json_decode( wp_remote_retrieve_body( $response ) );
 
 		$res_code = wp_remote_retrieve_response_code( $response );
+
+		if ( 405 === $res_code ) {
+			update_option( 'linkboss_site_disconnected', true );
+			return false;
+		}
 
 		if ( isset( $res_body->access ) && 200 === $res_code ) {
 			self::set_access_token( $res_body->access );

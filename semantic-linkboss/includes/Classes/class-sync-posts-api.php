@@ -220,6 +220,13 @@ class Sync_Posts_Api extends Sync_Posts {
 
 	public function prepare_batch_for_sync() {
 
+		/**
+		 * Restore force_data from option to ensure it persists across REST requests
+		 */
+		if ( get_option( 'linkboss_force_sync', false ) ) {
+			self::$force_data = true;
+		}
+
 		self::$show_msg = true;
 		/**
 		 * Data Idea
@@ -427,6 +434,11 @@ class Sync_Posts_Api extends Sync_Posts {
 		$batch = $this->get_batch_process( array( 'force_data' => $force_data ) );
 
 		/**
+		 * Store force_data in option for persistence across REST requests
+		 */
+		update_option( 'linkboss_force_sync', 'yes' === $force_data );
+
+		/**
 		 * Validate batch result if necessary
 		 */
 		if ( empty( $batch ) ) {
@@ -513,6 +525,11 @@ class Sync_Posts_Api extends Sync_Posts {
 				);
 			}
 		}
+
+		/**
+		 * Clear force_sync option after sync completes
+		 */
+		delete_option( 'linkboss_force_sync' );
 
 		return rest_ensure_response(
 			array(

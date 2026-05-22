@@ -257,15 +257,15 @@ class Settings {
 				
 			case 'get_post_id_from_url':
 				$url = isset( $params['url'] ) ? esc_url_raw( $params['url'] ) : '';
-				
+
 				if ( empty( $url ) ) {
 					return new WP_Error( 'no_url', esc_html__( 'URL is required.', 'semantic-linkboss' ), array( 'status' => 400 ) );
 				}
-				
+
 				// Use the enhanced_url_to_postid function from Sync_Posts class
 				$sync_posts = new Sync_Posts();
 				$post_id = $sync_posts->enhanced_url_to_postid( $url );
-				
+
 				if ( ! $post_id ) {
 					return rest_ensure_response(
 						array(
@@ -276,7 +276,7 @@ class Settings {
 						200
 					);
 				}
-				
+
 				return rest_ensure_response(
 					array(
 						'status'  => 'success',
@@ -285,6 +285,19 @@ class Settings {
 					),
 					200
 				);
+
+			case 'get_removed_urls':
+				$removed_urls = get_option( 'linkboss_removed_urls', array() );
+
+				return rest_ensure_response(
+					array(
+						'status'  => 'success',
+						'message' => 'Removed URLs fetched successfully',
+						'urls'    => $removed_urls,
+					),
+					200
+				);
+
 			default:
 				return new WP_Error( 'no_settings', esc_html__( 'Oops, Settings is not found.' ), array( 'status' => 404 ) );
 		}
@@ -384,6 +397,18 @@ class Settings {
 					array(
 						'status'  => 'success',
 						'message' => 'Sync Batch reset successfully',
+					),
+					200
+				);
+
+			case 'save_removed_urls':
+				$urls = isset( $params['urls'] ) ? $params['urls'] : array();
+				update_option( 'linkboss_removed_urls', $urls );
+
+				return rest_ensure_response(
+					array(
+						'status'  => 'success',
+						'message' => 'Removed URLs saved successfully',
 					),
 					200
 				);

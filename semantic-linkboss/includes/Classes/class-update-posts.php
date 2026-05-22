@@ -136,6 +136,11 @@ class Update_Posts {
 			return Auth::get_tokens_by_auth_code();
 		}
 
+		if ( 403 === $status ) {
+			update_option( 'linkboss_site_disconnected', true );
+			return new WP_Error( 'site_disconnected', esc_html__( 'Site has been removed from LinkBoss app. Please re-add it.', 'semantic-linkboss' ), array( 'status' => 403 ) );
+		}
+
 		if ( 200 !== $status ) {
 			return new WP_Error( 'response_error', esc_html__( 'Response Error!', 'semantic-linkboss' ), array( 'status' => $status ) );
 		}
@@ -173,6 +178,10 @@ class Update_Posts {
 			wp_die();
 		}
 
+		if ( get_option( 'linkboss_site_disconnected', false ) ) {
+			return;
+		}
+
 		$api_url      = SEMANTIC_LB_POSTS_SYNC_URL;
 		$access_token = Auth::get_access_token();
 
@@ -199,6 +208,18 @@ class Update_Posts {
 
 		if ( 401 === $status ) {
 			return Auth::get_tokens_by_auth_code();
+		}
+
+		if ( 403 === $status ) {
+			update_option( 'linkboss_site_disconnected', true );
+			echo wp_json_encode(
+				array(
+					'status' => 'error',
+					'title'  => 'Error!',
+					'msg'    => esc_html__( 'Site removed from LinkBoss app. Sync paused.', 'semantic-linkboss' ),
+				)
+			);
+			wp_die();
 		}
 
 		if ( 200 !== $status ) {
@@ -554,6 +575,71 @@ class Update_Posts {
 				update_post_meta( $post_id, '_fl_builder_data', $meta_data );
 				update_post_meta( $post_id, '_fl_builder_draft', $meta_data );
 				$post_updated = true; // Mark as updated
+			} elseif ( isset( $post_data['builder'] ) && 'divi' === $post_data['builder'] && ! empty( $post_content ) ) {
+				// Handle Divi Builder (both 4.x and 5.x formats)
+				// Get the original post content first
+				$original_post = get_post( $post_id );
+				$original_content = $original_post ? $original_post->post_content : '';
+
+				// Detect Divi version from original content (more reliable than meta)
+				$divi_version = '4.x'; // Default
+				if ( ! empty( $original_content ) ) {
+					if ( preg_match( '/<!-- wp:divi\//', $original_content ) ) {
+						$divi_version = '5.x';
+					} elseif ( preg_match( '/\[et_pb_/', $original_content ) ) {
+						$divi_version = '4.x';
+					}
+				}
+
+				// Fallback to meta if available
+				if ( isset( $post_data['meta']['divi_version'] ) && ! empty( $post_data['meta']['divi_version'] ) ) {
+					$divi_version = $post_data['meta']['divi_version'];
+				}
+
+				// Check if content is our wrapped format or raw shortcode/block format
+				$is_wrapped_format = ( false !== strpos( $post_content, 'divi-text-module' ) );
+
+				if ( $is_wrapped_format ) {
+					// Extract modules from the wrapped content
+					$updated_modules = self::extract_divi_modules_from_content( $post_content );
+
+					if ( ! empty( $updated_modules ) && ! empty( $original_content ) ) {
+						// Update based on Divi version
+						if ( '5.x' === $divi_version ) {
+							$new_content = self::update_divi_5x_content( $original_content, $updated_modules );
+						} else {
+							$new_content = self::update_divi_4x_content( $original_content, $updated_modules );
+						}
+
+						if ( $new_content !== $original_content ) {
+							global $wpdb;
+							$post_updated = $wpdb->update(
+								$wpdb->posts,
+								array(
+									'post_content'      => $new_content,
+									'post_modified'     => $date,
+									'post_modified_gmt' => $date,
+								),
+								array( 'ID' => $post_id )
+							);
+
+							if ( false !== $post_updated ) {
+								$post_updated = true;
+							}
+						} else {
+							$post_updated = true;
+						}
+					} else {
+						// No modules extracted but wrapped format - nothing to update
+						$post_updated = true;
+					}
+				} else {
+					// Raw format - LinkBoss returned raw shortcode/block content
+					// This happens when the original post had no et_pb_text/divi/text modules
+					// These pages have no editable text content, so skip the update
+					// to avoid breaking the shortcode escaping
+					$post_updated = true; // Mark as success but don't actually update
+				}
 			} elseif ( 'acf-classic' === $post_type && 'classic' === $builder && ! empty( $post_content ) ) {
 				// Handle ACF-Classic
 				global $wpdb;
@@ -711,6 +797,211 @@ class Update_Posts {
 
 		$res_body = json_decode( wp_remote_retrieve_body( $res ) );
 		$res_code = wp_remote_retrieve_response_code( $res );
+	}
+
+	/**
+	 * Extract Divi modules from the content returned by LinkBoss.
+	 *
+	 * @param string $content The HTML content with divi-text-module divs.
+	 * @return array Array of modules with index and content.
+	 * @since 2.7.7
+	 */
+	private static function extract_divi_modules_from_content( $content ) {
+		$modules = array();
+
+		// Match <div class="divi-text-module" data-module-index="N" data-module-type="...">content<!-- END-DIVI-MODULE --></div>
+		$pattern = '/<div class="divi-text-module" data-module-index="(\d+)" data-module-type="([^"]+)">(.*?)<!-- END-DIVI-MODULE --><\/div>/s';
+
+		if ( preg_match_all( $pattern, $content, $matches, PREG_SET_ORDER ) ) {
+			foreach ( $matches as $match ) {
+				$modules[] = array(
+					'index'   => (int) $match[1],
+					'type'    => $match[2],
+					'content' => $match[3],
+				);
+			}
+		}
+
+		return $modules;
+	}
+
+	/**
+	 * Update Divi 4.x shortcode content with modified modules.
+	 *
+	 * @param string $post_content The original post content.
+	 * @param array  $updated_modules Array of modules with new content.
+	 * @return string The updated post content.
+	 * @since 2.7.7
+	 */
+	private static function update_divi_4x_content( $post_content, $updated_modules ) {
+		// Create a map of index to new content
+		$module_map = array();
+		foreach ( $updated_modules as $module ) {
+			$module_map[ $module['index'] ] = $module['content'];
+		}
+
+		$module_index = 0;
+		$post_content = preg_replace_callback(
+			'/\[et_pb_text\s+([^\]]*)\](.*?)\[\/et_pb_text\]/s',
+			function ( $match ) use ( &$module_index, $module_map ) {
+				$new_content = isset( $module_map[ $module_index ] )
+					? $module_map[ $module_index ]
+					: $match[2];
+
+				$module_index++;
+				return '[et_pb_text ' . $match[1] . ']' . $new_content . '[/et_pb_text]';
+			},
+			$post_content
+		);
+
+		return $post_content;
+	}
+
+	/**
+	 * Update Divi 5.x Gutenberg block content with modified modules.
+	 *
+	 * @param string $post_content The original post content.
+	 * @param array  $updated_modules Array of modules with new content.
+	 * @return string The updated post content.
+	 * @since 2.7.7
+	 */
+	private static function update_divi_5x_content( $post_content, $updated_modules ) {
+		// Create a map of index to module data
+		$module_map = array();
+		foreach ( $updated_modules as $module ) {
+			$module_map[ $module['index'] ] = $module;
+		}
+
+		$module_index = 0;
+		$result = '';
+		$last_end = 0;
+
+		// Find all divi blocks (text, toggle, etc.) in order of appearance
+		$all_blocks_pattern = '/<!-- wp:divi\/(text|toggle)\s+/';
+		preg_match_all( $all_blocks_pattern, $post_content, $all_block_matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE );
+
+		if ( ! empty( $all_block_matches ) ) {
+			foreach ( $all_block_matches as $block_match ) {
+				$block_start_pos = $block_match[0][1];
+				$block_type = $block_match[1][0]; // 'text' or 'toggle'
+
+				// Add content before this block
+				$result .= substr( $post_content, $last_end, $block_start_pos - $last_end );
+
+				// Find the end of the block comment (the closing -->)
+				$comment_end_pos = strpos( $post_content, '-->', $block_start_pos );
+				if ( false === $comment_end_pos ) {
+					$last_end = $block_start_pos;
+					continue;
+				}
+
+				// Extract the full block start comment
+				$block_start_comment = substr( $post_content, $block_start_pos, $comment_end_pos - $block_start_pos + 3 );
+
+				// Check if this is a self-closing block (ends with /-->)
+				$is_self_closing = preg_match( '/\/-->$/', $block_start_comment );
+
+				// Parse JSON from block start comment (supports both --> and /--> endings)
+				if ( preg_match( '/^<!-- wp:divi\/(text|toggle)\s+(\{.*\})\s*\/?-->$/s', $block_start_comment, $json_match ) ) {
+					$block_type_from_json = $json_match[1];
+					$json_str = $json_match[2];
+					$attrs = json_decode( $json_str, true );
+
+					if ( $is_self_closing ) {
+						// Self-closing block: content is in JSON, no closing tag
+						$block_end = $comment_end_pos + 3;
+						$original_block = substr( $post_content, $block_start_pos, $block_end - $block_start_pos );
+
+						// Check if JSON parsed successfully
+						if ( null === $attrs && JSON_ERROR_NONE !== json_last_error() ) {
+							// JSON parsing failed, keep original
+							$result .= $original_block;
+							$module_index++;
+						} elseif ( isset( $module_map[ $module_index ] ) ) {
+							$module_data = $module_map[ $module_index ];
+							$new_content = $module_data['content'];
+
+							// Update the content in the JSON attributes
+							if ( isset( $attrs['content']['innerContent']['desktop']['value'] ) ) {
+								$attrs['content']['innerContent']['desktop']['value'] = $new_content;
+							}
+
+							// Rebuild as self-closing block
+							$new_block = '<!-- wp:divi/' . $block_type_from_json . ' ' . json_encode( $attrs, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . ' /-->';
+							$result .= $new_block;
+							$module_index++;
+						} else {
+							// No update for this module, keep original
+							$result .= $original_block;
+							$module_index++;
+						}
+					} else {
+						// Regular block: content between tags, has closing tag
+						$block_content_start = $comment_end_pos + 3;
+
+						// Find matching closing comment
+						$end_pattern = '/<!-- \/wp:divi\/' . preg_quote( $block_type, '/' ) . ' -->/';
+						if ( ! preg_match( $end_pattern, $post_content, $end_match, PREG_OFFSET_CAPTURE, $block_content_start ) ) {
+							$last_end = $block_start_pos;
+							continue;
+						}
+
+						$block_content_end = $end_match[0][1];
+						$block_end = $block_content_end + strlen( '<!-- /wp:divi/' . $block_type . ' -->' );
+
+						// Extract original block
+						$original_block = substr( $post_content, $block_start_pos, $block_end - $block_start_pos );
+
+						// Check if JSON parsed successfully
+						if ( null === $attrs && JSON_ERROR_NONE !== json_last_error() ) {
+							// JSON parsing failed, keep original
+							$result .= $original_block;
+							$module_index++;
+						} elseif ( isset( $module_map[ $module_index ] ) ) {
+							$module_data = $module_map[ $module_index ];
+							$new_content = $module_data['content'];
+
+							// Update the content in the JSON attributes
+							if ( isset( $attrs['content']['innerContent']['desktop']['value'] ) ) {
+								$attrs['content']['innerContent']['desktop']['value'] = $new_content;
+							}
+
+							// Rebuild block with JSON_UNESCAPED_UNICODE to preserve characters
+							$new_block = '<!-- wp:divi/' . $block_type_from_json . ' ' . json_encode( $attrs, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . ' -->' . $new_content . '<!-- /wp:divi/' . $block_type_from_json . ' -->';
+							$result .= $new_block;
+							$module_index++;
+						} else {
+							// No update for this module, keep original
+							$result .= $original_block;
+							$module_index++;
+						}
+					}
+
+					$last_end = $block_end;
+				} else {
+					// Keep original if parsing fails - need to find where block ends
+					if ( $is_self_closing ) {
+						$block_end = $comment_end_pos + 3;
+					} else {
+						// Try to find closing tag
+						$end_pattern = '/<!-- \/wp:divi\/' . preg_quote( $block_type, '/' ) . ' -->/';
+						if ( preg_match( $end_pattern, $post_content, $end_match, PREG_OFFSET_CAPTURE, $comment_end_pos + 3 ) ) {
+							$block_end = $end_match[0][1] + strlen( '<!-- /wp:divi/' . $block_type . ' -->' );
+						} else {
+							$block_end = $comment_end_pos + 3;
+						}
+					}
+					$result .= substr( $post_content, $block_start_pos, $block_end - $block_start_pos );
+					$module_index++;
+					$last_end = $block_end;
+				}
+			}
+		}
+
+		// Add remaining content
+		$result .= substr( $post_content, $last_end );
+
+		return $result;
 	}
 }
 

@@ -840,6 +840,18 @@ class Sync_Posts {
 						$meta = $beaver_meta;
 						break;
 
+					case 'divi':
+						// Handle Divi Builder (4.x shortcodes and 5.x Gutenberg blocks)
+						$divi_content = $this->extract_divi_text_content( $post->post_content );
+						if ( $divi_content ) {
+							$meta = $divi_content['meta'];
+							$rendered_content = $divi_content['content'];
+						} else {
+							$meta = null;
+							$rendered_content = $post->post_content;
+						}
+						break;
+
 					default:
 						$meta = null;
 				}
@@ -1050,5 +1062,219 @@ class Sync_Posts {
 	   */
 	public static function reset_processed_posts() {
 		self::$processed_posts_in_request = array();
+	}
+
+	/**
+	 * Extract text content from Divi Builder posts (4.x and 5.x formats).
+	 *
+	 * @param string $post_content The post content.
+	 * @return array|null Array with 'content' and 'meta' keys, or null if no content.
+	 * @since 2.7.7
+	 */
+	private function extract_divi_text_content( $post_content ) {
+		// Detect Divi version
+		$divi_version = $this->detect_divi_version( $post_content );
+
+		if ( ! $divi_version ) {
+			return null;
+		}
+
+		if ( '5.x' === $divi_version ) {
+			return $this->extract_divi_5x_text_modules( $post_content );
+		}
+
+		return $this->extract_divi_4x_text_modules( $post_content );
+	}
+
+	/**
+	 * Detect Divi builder version from post content.
+	 *
+	 * @param string $post_content The post content.
+	 * @return string|null '4.x', '5.x', or null if not detected.
+	 * @since 2.7.7
+	 */
+	private function detect_divi_version( $post_content ) {
+		// Check for Gutenberg block format (Divi 5.x)
+		if ( preg_match( '/<!-- wp:divi\//', $post_content ) ) {
+			return '5.x';
+		}
+
+		// Check for shortcode format (Divi 4.x)
+		if ( preg_match( '/\[et_pb_/', $post_content ) ) {
+			return '4.x';
+		}
+
+		return null;
+	}
+
+	/**
+	 * Extract text content from Divi 4.x shortcode format.
+	 *
+	 * @param string $post_content The post content.
+	 * @return array|null Array with 'content' and 'meta' keys.
+	 * @since 2.7.7
+	 */
+	private function extract_divi_4x_text_modules( $post_content ) {
+		$modules = array();
+		$content_html = '';
+
+		// Match [et_pb_text ...]content[/et_pb_text]
+		$text_pattern = '/\[et_pb_text\s+([^\]]*)\](.*?)\[\/et_pb_text\]/s';
+
+		if ( preg_match_all( $text_pattern, $post_content, $matches, PREG_SET_ORDER ) ) {
+			foreach ( $matches as $index => $match ) {
+				$module_content = $match[2];
+
+				// Skip empty content
+				if ( empty( trim( strip_tags( $module_content ) ) ) ) {
+					continue;
+				}
+
+				// Store module info for later reconstruction
+				$modules[] = array(
+					'index'   => $index,
+					'type'    => 'et_pb_text',
+					'content' => $module_content,
+				);
+
+				// Build HTML with data attributes for identification
+				$content_html .= sprintf(
+					'<div class="divi-text-module" data-module-index="%d" data-module-type="et_pb_text">',
+					$index
+				);
+				$content_html .= $module_content;
+				$content_html .= '<!-- END-DIVI-MODULE --></div>';
+			}
+		}
+
+		if ( empty( $content_html ) ) {
+			return null;
+		}
+
+		return array(
+			'content' => '<div class="divi-text-modules">' . $content_html . '</div>',
+			'meta'    => array(
+				'divi_version' => '4.x',
+				'module_count' => count( $modules ),
+			),
+		);
+	}
+
+	/**
+	 * Extract text content from Divi 5.x Gutenberg block format.
+	 * Handles both text and toggle blocks IN DOCUMENT ORDER.
+	 *
+	 * @param string $post_content The post content.
+	 * @return array|null Array with 'content' and 'meta' keys.
+	 * @since 2.7.7
+	 */
+	private function extract_divi_5x_text_modules( $post_content ) {
+		$modules = array();
+		$content_html = '';
+		$module_index = 0;
+
+		// Find ALL text and toggle blocks in document order
+		$all_blocks_pattern = '/<!-- wp:divi\/(text|toggle)\s+/';
+		preg_match_all( $all_blocks_pattern, $post_content, $all_matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE );
+
+		if ( empty( $all_matches ) ) {
+			return null;
+		}
+
+		foreach ( $all_matches as $match ) {
+			$block_start_pos = $match[0][1];
+			$block_type = $match[1][0]; // 'text' or 'toggle'
+
+			// Extract this block's content
+			$block_data = $this->extract_single_divi_5x_block( $post_content, $block_start_pos, $block_type );
+
+			if ( $block_data && ! empty( trim( strip_tags( $block_data['content'] ) ) ) ) {
+				$modules[] = array(
+					'index'   => $module_index,
+					'type'    => 'divi/' . $block_type,
+					'content' => $block_data['content'],
+					'title'   => isset( $block_data['title'] ) ? $block_data['title'] : '',
+				);
+
+				$content_html .= sprintf(
+					'<div class="divi-text-module" data-module-index="%d" data-module-type="divi/%s">',
+					$module_index,
+					$block_type
+				);
+				$content_html .= $block_data['content'];
+				$content_html .= '<!-- END-DIVI-MODULE --></div>';
+
+				$module_index++;
+			}
+		}
+
+		if ( empty( $content_html ) ) {
+			return null;
+		}
+
+		return array(
+			'content' => '<div class="divi-text-modules">' . $content_html . '</div>',
+			'meta'    => array(
+				'divi_version' => '5.x',
+				'module_count' => count( $modules ),
+			),
+		);
+	}
+
+	/**
+	 * Extract a single block's content from Divi 5.x content.
+	 *
+	 * @param string $post_content The full post content.
+	 * @param int    $block_start_pos The starting position of the block.
+	 * @param string $block_type The block type ('text' or 'toggle').
+	 * @return array|null Array with 'content' and optionally 'title', or null if extraction fails.
+	 * @since 2.7.7
+	 */
+	private function extract_single_divi_5x_block( $post_content, $block_start_pos, $block_type ) {
+		// Find the end of the block comment (the closing -->)
+		$comment_end_pos = strpos( $post_content, '-->', $block_start_pos );
+		if ( false === $comment_end_pos ) {
+			return null;
+		}
+
+		// Extract the full block start comment
+		$block_start_comment = substr( $post_content, $block_start_pos, $comment_end_pos - $block_start_pos + 3 );
+
+		// Parse JSON from block start comment (supports both --> and /--> endings)
+		if ( preg_match( '/^<!-- wp:divi\/' . preg_quote( $block_type, '/' ) . '\s+(\{.*\})\s*\/?-->$/s', $block_start_comment, $json_match ) ) {
+			$json_str = $json_match[1];
+			$attrs = json_decode( $json_str, true );
+
+			if ( null !== $attrs || JSON_ERROR_NONE === json_last_error() ) {
+				$module_content = '';
+				$module_title = '';
+
+				// Extract content based on block type
+				if ( 'toggle' === $block_type ) {
+					// Toggle blocks: title is shown as header by Divi, content is the answer
+					// DO NOT combine title with content - Divi handles them separately
+					if ( isset( $attrs['title']['innerContent']['desktop']['value'] ) ) {
+						$module_title = $attrs['title']['innerContent']['desktop']['value'];
+					}
+					if ( isset( $attrs['content']['innerContent']['desktop']['value'] ) ) {
+						$module_content = $attrs['content']['innerContent']['desktop']['value'];
+					}
+					// For toggle blocks, only send the content (answer), not the title
+					// The title is already stored separately and displayed by Divi as the toggle header
+				} else {
+					// Text blocks have content in innerContent
+					if ( isset( $attrs['content']['innerContent']['desktop']['value'] ) ) {
+						$module_content = $attrs['content']['innerContent']['desktop']['value'];
+					}
+				}
+
+				return array(
+					'content' => $module_content,
+					'title'   => $module_title,
+				);
+			}
+		}
+
+		return null;
 	}
 }

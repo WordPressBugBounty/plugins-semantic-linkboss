@@ -3,7 +3,7 @@
  * Plugin Name: LinkBoss - Semantic Internal Linking
  * Plugin URI: https://linkboss.io
  * Description: NLP, AI, and Machine Learning-powered semantic interlinking tool. Supports manual incoming/outgoing, SILO, and bulk auto internal links.
- * Version: 2.8.2
+ * Version: 2.8.3
  * Requires at least: 5.6
  * Requires PHP: 7.4
  * Author: ZVENTURES LLC
@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SEMANTIC_LB_VERSION', '2.8.2' );
+define( 'SEMANTIC_LB_VERSION', '2.8.3' );
 define( 'SEMANTIC_LB__FILE__', __FILE__ );
 define( 'SEMANTIC_LB_PATH', plugin_dir_path( SEMANTIC_LB__FILE__ ) );
 define( 'SEMANTIC_LB_URL', plugins_url( '/', SEMANTIC_LB__FILE__ ) );
@@ -207,32 +207,6 @@ if ( ! function_exists( 'dci_plugin_semantic_lb' ) ) {
 	add_action( 'admin_init', 'dci_plugin_semantic_lb' );
 }
 
-/**
- * Review Automation Integration
- */
-
-if ( ! function_exists( 'semantic_lb_rc_plugin' ) ) {
-	function semantic_lb_rc_plugin() {
-
-		require_once SEMANTIC_LB_PATH . 'feedbacks/start.php';
-
-		rc_dynamic_init(
-			array(
-				'sdk_version'  => '1.0.0',
-				'plugin_name'  => 'LinkBoss',
-				'plugin_icon'  => SEMANTIC_LB_ASSETS_URL . 'imgs/linkboss-icon.png',
-				'slug'         => 'semantic-linkboss',
-				'menu'         => array(
-					'slug' => 'semantic-linkboss',
-				),
-				'review_url'   => 'https://wordpress.org/plugins/semantic-linkboss/',
-				'plugin_title' => 'Yay! Great that you\'re using LinkBoss',
-				'plugin_msg'   => '<p>Loved using LinkBoss on your website? Share your experience in a review and help us spread the love to everyone right now. Good words will help the community.</p>',
-			)
-		);
-	}
-	add_action( 'admin_init', 'semantic_lb_rc_plugin' );
-}
 
 /**
  * Redirect to the welcome page

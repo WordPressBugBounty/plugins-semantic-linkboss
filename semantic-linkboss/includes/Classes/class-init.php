@@ -165,58 +165,63 @@ class Init {
 		switch ( $action ) {
 			case 'init_posts_ids_batch':
 				$result = self::init_posts_ids_batch( true );
-				
-				// Check if we're using URL-based syncing
-				$query_data = get_option( 'linkboss_custom_query', '' );
-				$is_url_sync = isset( $query_data['sync_by'] ) && 'urls' === $query_data['sync_by'];
-				
-				if ($result === true) {
+
+				// $result is now an array with 'status' and 'skipped' keys
+				$status = isset( $result['status'] ) ? $result['status'] : 'complete';
+				$skipped = isset( $result['skipped'] ) ? $result['skipped'] : 0;
+
+				if ($status === 'no_posts') {
 					// No more posts to process
 					return rest_ensure_response(
 						array(
 							'status' => 'success',
 							'message' => 'The contents are prepared, please press the Sync button below.',
+							'skipped' => $skipped,
 						),
 						200
 					);
-				} else if ($result === false) {
+				} else if ($status === 'in_progress') {
 					// More posts to process in regular mode
 					return rest_ensure_response(
 						array(
 							'status' => 'success',
 							'message' => 'The contents are prepared, please press the Sync button below.',
 							'has_post' => true,
+							'skipped' => $skipped,
 						),
 						200
 					);
-				} else if ($result === 'url_sync_complete') {
+				} else if ($status === 'url_sync_complete') {
 					// URL sync is complete, no more posts to process
 					return rest_ensure_response(
 						array(
 							'status' => 'success',
 							'message' => 'The contents are prepared, please press the Sync button below.',
 							'has_post' => false,
+							'skipped' => $skipped,
 						),
 						200
 					);
-				} else if ($result === 'url_sync_in_progress') {
+				} else if ($status === 'url_sync_in_progress') {
 					// URL sync is in progress, but we've processed all URLs for this batch
 					return rest_ensure_response(
 						array(
 							'status' => 'success',
 							'message' => 'The contents are prepared, please press the Sync button below.',
 							'has_post' => false,
+							'skipped' => $skipped,
 						),
 						200
 					);
 				}
-				
+
 				// Default fallback (should not reach here)
 				return rest_ensure_response(
 					array(
 						'status' => 'success',
 						'message' => 'The contents are prepared, please press the Sync button below.',
 						'has_post' => false,
+						'skipped' => $skipped,
 					),
 					200
 				);
@@ -234,42 +239,54 @@ class Init {
 	public static function init_posts_ids_batch( $api_call = false ) {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'linkboss_sync_batch';
-		
+
 		/**
 		 * Custom Query Builder
 		 */
 		$query_data = get_option( 'linkboss_custom_query', '' );
 		$is_url_sync = isset( $query_data['sync_by'] ) && 'urls' === $query_data['sync_by'];
-		
+
+		// Track skipped URLs for reporting
+		$skipped_count = 0;
+
 		if ($is_url_sync && isset($query_data['url_list']) && !empty($query_data['url_list'])) {
 			// URL-based syncing
 			$url_list = $query_data['url_list'];
 			$urls = array_filter(array_map('trim', explode("\n", $url_list)));
 			$posts = array();
-			
+
 			// Create an instance of Sync_Posts to use the enhanced URL to post ID function
 			$sync_posts = new \SEMANTIC_LB\Classes\Sync_Posts();
-			
+
 			// Track if we added any new posts to the batch
 			$added_new_posts = false;
 			$processed_all_urls = true;
-			
+
 			// Get post IDs from URLs
+			// Get removed URLs list
+			$removed_urls = get_option( 'linkboss_removed_urls', array() );
+
 			foreach ($urls as $url) {
+				// Skip URLs that are in the removed list
+				if ( in_array( $url, $removed_urls ) ) {
+					$skipped_count++;
+					continue;
+				}
+
 				// Use the enhanced URL to post ID function
 				$post_id = $sync_posts->enhanced_url_to_postid($url);
-				
+
 				if ($post_id > 0) {
 					// Check if this post is already in the sync batch table
 					// phpcs:ignore
 					$exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE post_id = %d", $post_id));
-					
+
 					if (!$exists) {
 						$post = get_post($post_id);
 						if ($post) {
 							// Directly insert into the sync_batch table instead of adding to posts array
 							$content_size = mb_strlen($post->post_content, '8bit');
-							
+
 							// Insert the post into the sync_batch table
 							// phpcs:ignore
 							$result = $wpdb->insert(
@@ -283,10 +300,10 @@ class Init {
 								),
 								array('%d', '%s', '%s', '%s', '%d')
 							);
-							
+
 							if ($result) {
 								$added_new_posts = true;
-								
+
 								// Still add to posts array for batch processing
 								$posts[] = array(
 									'ID' => $post_id,
@@ -310,7 +327,7 @@ class Init {
 							array('%s'),
 							array('%d')
 						);
-						
+
 						if ($result) {
 							// Add to posts array for batch processing
 							$post = get_post($post_id);
@@ -330,15 +347,21 @@ class Init {
 					$processed_all_urls = false;
 				}
 			}
-			
+
 			// For URL-based syncing, we need to return a special status
 			if ($api_call) {
 				if (count($posts) === 0) {
 					// No posts were found or all posts were already in the sync batch table
-					return 'url_sync_complete';
+					return array(
+						'status' => 'url_sync_complete',
+						'skipped' => $skipped_count,
+					);
 				} else {
 					// We processed some posts, but there might be more
-					return 'url_sync_in_progress';
+					return array(
+						'status' => 'url_sync_in_progress',
+						'skipped' => $skipped_count,
+					);
 				}
 			}
 		} else {
@@ -366,6 +389,21 @@ class Init {
 
 			// phpcs:ignore
 			$posts = $wpdb->get_results( $sql, ARRAY_A );
+
+			// Filter out posts whose URLs are in the removed list
+			$removed_urls = get_option( 'linkboss_removed_urls', array() );
+			if ( ! empty( $removed_urls ) ) {
+				$posts_before_filter = count( $posts );
+				$posts = array_filter( $posts, function( $post ) use ( $removed_urls, &$skipped_count ) {
+					$post_url = get_permalink( $post['ID'] );
+					if ( in_array( $post_url, $removed_urls ) ) {
+						$skipped_count++;
+						return false;
+					}
+					return true;
+				} );
+				$posts = array_values( $posts ); // Re-index array
+			}
 		}
 
 		/**
@@ -440,9 +478,15 @@ class Init {
 		 */
 
 		if ( $api_call && $total_batches <= 0 ) {
-			return true;
+			return array(
+				'status' => 'no_posts',
+				'skipped' => $skipped_count,
+			);
 		} else {
-			return false;
+			return array(
+				'status' => 'in_progress',
+				'skipped' => $skipped_count,
+			);
 		}
 	}
 
@@ -456,21 +500,30 @@ class Init {
 		$reports = array();
 		$query_data = get_option( 'linkboss_custom_query', '' );
 		$is_url_sync = isset( $query_data['sync_by'] ) && 'urls' === $query_data['sync_by'];
-		
+
 		// Set sync method flag
 		$reports['sync_method'] = $is_url_sync ? 'urls' : 'post_types';
-		
+
+		// Get excluded URLs count for reporting
+		$removed_urls = get_option( 'linkboss_removed_urls', array() );
+		$reports['excluded_urls_count'] = count( $removed_urls );
+
 		if ($is_url_sync) {
 			// For URL-based syncing
 			$url_list = isset( $query_data['url_list'] ) ? $query_data['url_list'] : '';
 			$urls = array_filter(array_map('trim', explode("\n", $url_list)));
 			$valid_urls_count = 0;
-			
+
 			// Create an instance of Sync_Posts to use the enhanced URL to post ID function
 			$sync_posts = new \SEMANTIC_LB\Classes\Sync_Posts();
-			
-			// Count valid URLs (those that resolve to post IDs)
+
+			// Count valid URLs (those that resolve to post IDs and are not removed)
 			foreach ($urls as $url) {
+				// Skip removed URLs
+				if ( in_array( $url, $removed_urls ) ) {
+					continue;
+				}
+
 				if (!empty($url)) {
 					$post_id = $sync_posts->enhanced_url_to_postid($url);
 					if ($post_id > 0) {
@@ -479,7 +532,7 @@ class Init {
 					}
 				}
 			}
-			
+
 			$reports['urls'] = $valid_urls_count;
 			$reports['pages'] = 0; // Not relevant for URL syncing
 			$reports['posts'] = 0; // Not relevant for URL syncing
@@ -521,13 +574,13 @@ class Init {
 		$sql_need_sync = "SELECT COUNT(*) FROM {$table_name} WHERE sent_status IS NULL AND (post_status = 'publish' OR post_status = 'trash')";
 		// phpcs:ignore
 		$reports['sync_remaing'] = (int) $wpdb->get_var( $sql_need_sync );
-		
+
 		if ($is_url_sync) {
 			// For URL-based syncing, calculate queue_remaining based on URLs
 			// If we have more URLs than total_queue_batch, we need to add more to the queue
 			// Otherwise, we just need to sync what's already in the queue
 			$reports['queue_remaining'] = max(0, $reports['urls'] - $reports['total_queue_batch']);
-			
+
 			// For URL-based syncing, we need to ensure sync_done is correctly reported
 			// If we're syncing by URLs, sync_done should be the number of URLs that have been synced
 			if ($reports['urls'] > 0) {
@@ -561,7 +614,7 @@ class Init {
 		if (!isset($obj)) {
 			$obj = new self();
 		}
-		
+
 		// For URL-based syncing, set total_categories to 0 as it's not relevant
 		if ($is_url_sync) {
 			$reports['total_categories'] = 0;
