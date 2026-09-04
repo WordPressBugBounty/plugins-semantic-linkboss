@@ -413,6 +413,120 @@ class Settings {
 					200
 				);
 
+			case 'restore_excluded_urls':
+				$urls_to_restore = isset( $params['urls'] ) ? (array) $params['urls'] : array();
+
+				if ( empty( $urls_to_restore ) ) {
+					return new WP_Error(
+						'no_urls',
+						esc_html__( 'Oops, no URLs were provided to restore.', 'semantic-linkboss' ),
+						array( 'status' => 400 )
+					);
+				}
+
+				$urls_to_restore = array_map(
+					static function ( $url ) {
+						return esc_url_raw( trim( $url ) );
+					},
+					$urls_to_restore
+				);
+				$urls_to_restore = array_filter( $urls_to_restore );
+
+				$current_removed_urls = get_option( 'linkboss_removed_urls', array() );
+				if ( ! is_array( $current_removed_urls ) ) {
+					$current_removed_urls = array();
+				}
+
+				$remaining = array_values( array_diff( $current_removed_urls, $urls_to_restore ) );
+				update_option( 'linkboss_removed_urls', $remaining );
+
+				$restored_count = count( $current_removed_urls ) - count( $remaining );
+
+				/**
+				 * Re-queue the restored posts in the sync batch so the next
+				 * "Sync Now" picks them up. Posts already in the batch get
+				 * their `sent_status` reset; posts that aren't in the batch
+				 * yet are inserted so the next Prepare Data pass doesn't
+				 * report them as "new" (which would make the frontend loop
+				 * run twice and double-count the still-excluded URLs).
+				 */
+				global $wpdb;
+				$table_name       = $wpdb->prefix . 'linkboss_sync_batch';
+				$requeued_count   = 0;
+				$unresolved_urls  = array();
+
+				if ( ! empty( $urls_to_restore ) ) {
+					$sync_posts = new \SEMANTIC_LB\Classes\Sync_Posts();
+
+					foreach ( $urls_to_restore as $restored_url ) {
+						$post_id = $sync_posts->enhanced_url_to_postid( $restored_url );
+
+						if ( $post_id <= 0 ) {
+							$unresolved_urls[] = $restored_url;
+							continue;
+						}
+
+						// phpcs:ignore
+						$exists = (int) $wpdb->get_var(
+							$wpdb->prepare(
+								"SELECT COUNT(*) FROM {$table_name} WHERE post_id = %d",
+								$post_id
+							)
+						);
+
+						if ( $exists ) {
+							// phpcs:ignore
+							$updated = $wpdb->update(
+								$table_name,
+								array( 'sent_status' => null ),
+								array( 'post_id' => $post_id ),
+								array( '%s' ),
+								array( '%d' )
+							);
+
+							if ( false !== $updated ) {
+								$requeued_count++;
+							}
+						} else {
+							$post = get_post( $post_id );
+							if ( $post ) {
+								$content_size = mb_strlen( $post->post_content, '8bit' );
+
+								// phpcs:ignore
+								$inserted = $wpdb->insert(
+									$table_name,
+									array(
+										'post_id'     => $post_id,
+										'post_type'   => $post->post_type,
+										'post_status' => $post->post_status,
+										'sent_status' => null,
+										'content_size'=> $content_size,
+									),
+									array( '%d', '%s', '%s', '%s', '%d' )
+								);
+
+								if ( $inserted ) {
+									$requeued_count++;
+								}
+							} else {
+								$unresolved_urls[] = $restored_url;
+							}
+						}
+					}
+				}
+
+				return rest_ensure_response(
+					array(
+						'status'           => 'success',
+						'message'          => 'Excluded URLs restored successfully',
+						'restored_count'   => $restored_count,
+						'requeued_count'   => $requeued_count,
+						'unresolved_urls'  => $unresolved_urls,
+						'remaining'        => $remaining,
+					),
+					200
+				);
+
 			default:
 				return new WP_Error( 'no_settings', esc_html__( 'Oops, Settings is not found.' ), array( 'status' => 404 ) );
 		}

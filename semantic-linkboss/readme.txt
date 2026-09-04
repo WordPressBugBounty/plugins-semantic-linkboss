@@ -3,9 +3,9 @@ Contributors: zventures, bdkoder, anikyusuf, ahmdsabbir, prapon
 Donate link: https://linkboss.io/donate
 Tags: internal linking, SEO, automation, link building, auto link
 Requires at least: 6.0
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.8.3
+Stable tag: 2.8.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -90,6 +90,7 @@ https://youtu.be/zVpQ9LfEAAk
 == Frequently Asked Questions ==
 
 = How does LinkBoss create internal links? =
+
 LinkBoss uses advanced Natural Language Processing (NLP) and machine learning algorithms to analyze your content semantically. It identifies contextually relevant opportunities for internal links and suggests appropriate anchor text, ensuring each link adds value for both users and search engines. Rather than relying on simple keyword matching, LinkBoss understands the meaning and context of your content to surface the most relevant linking opportunities.
 
 = Is the GSC Rank Tracker really free? =
@@ -99,7 +100,7 @@ Yes. The Google Search Console integration, including rank tracking, analytics, 
 **No.** LinkBoss creates real, permanent HTML links embedded directly in your content. If you deactivate or delete the plugin, your links remain 100% intact.
 
 = How does "Existing Sentence" linking work? =
-This is a user favorite. Instead of just highlighting a keyword, LinkBoss scans your contents to find full sentences that are contextually relevant to your target URL. It turns a specific phrase within that existing sentence into a link, making it look completely natural and human-written.
+This is a user favorite. Instead of just highlighting a keyword, LinkBoss scans your old posts to find full sentences that are contextually relevant to your target URL. It turns a specific phrase within that existing sentence into a link, making it look completely natural and human-written.
 
 = Does it work with non-English sites? =
 Yes! We support over 30 languages (Spanish, German, French, Dutch, Portuguese, Italian, Chinese, Russian, Arabic, and many more) with native semantic understanding for each.
@@ -130,6 +131,10 @@ Use the **Anchor Manager**. It highlights if you have used the exact same anchor
 
 == Changelog ==
 
+= 2.8.4 - September 4, 2026 =
+* Added: Restore URLs from the excluded list — re-sync previously removed URLs in one click
+* Improved: "Remove Synced Contents" UI with an interactive list, search/filter, and bulk restore
+
 = 2.8.3 - May 22, 2026 =
 * Added: Divi 5 support
 * Added: Ignore URL support when syncing 
@@ -153,6 +158,9 @@ Use the **Anchor Manager**. It highlights if you have used the exact same anchor
 [View complete changelog](https://linkboss.io/changelog)
 
 == Upgrade Notice ==
+
+= 2.8.4 =
+You can now restore URLs that were previously removed from sync via the "Remove Synced Contents" tab.
 
 = 2.8.3 =
 Added Divi 5 support with over-all performance optimization.
