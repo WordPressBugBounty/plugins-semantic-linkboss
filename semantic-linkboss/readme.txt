@@ -3,9 +3,9 @@ Contributors: zventures, bdkoder, anikyusuf, ahmdsabbir, prapon
 Donate link: https://linkboss.io/donate
 Tags: internal linking, SEO, automation, link building, auto link
 Requires at least: 6.0
-Tested up to: 7.1
+Tested up to: 7.1.2
 Requires PHP: 7.4
-Stable tag: 2.8.4
+Stable tag: 2.8.5
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -131,6 +131,10 @@ Use the **Anchor Manager**. It highlights if you have used the exact same anchor
 
 == Changelog ==
 
+= 2.8.5 - September 29, 2026 =
+* Improved: Category archive sync is improved for both plain WordPress and WooCommerce sites
+* Improved: Advanced Sync Settings toggle renamed from "WooCommerce Category Sync" to "Category Archive Sync"
+
 = 2.8.4 - September 4, 2026 =
 * Added: Restore URLs from the excluded list — re-sync previously removed URLs in one click
 * Improved: "Remove Synced Contents" UI with an interactive list, search/filter, and bulk restore
@@ -158,6 +162,9 @@ Use the **Anchor Manager**. It highlights if you have used the exact same anchor
 [View complete changelog](https://linkboss.io/changelog)
 
 == Upgrade Notice ==
+
+= 2.8.5 =
+Category archive sync is improved for both plain WordPress and WooCommerce sites.
 
 = 2.8.4 =
 You can now restore URLs that were previously removed from sync via the "Remove Synced Contents" tab.

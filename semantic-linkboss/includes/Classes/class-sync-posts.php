@@ -45,10 +45,10 @@ class Sync_Posts {
 	public function __construct() {
 		self::$sync_speed = get_option( 'linkboss_sync_speed', 10 );
 
-		//woocom
-		if ( class_exists( 'WooCommerce' ) ) {
-			add_action( 'edited_term', array( $this, 'on_term_edit' ), 10, 3 );
-		}
+		// edited_term / created_term fire for every taxonomy; on_term_edit filters internally.
+		// Register unconditionally so plain WP (no WooCommerce) category edits also sync.
+		add_action( 'edited_term', array( $this, 'on_term_edit' ), 10, 3 );
+		add_action( 'created_term', array( $this, 'on_term_edit' ), 10, 3 );
 	}
 
 	/**
@@ -69,7 +69,7 @@ class Sync_Posts {
 		// List the taxonomies you want to capture
 		$allowed_taxonomies = array( 'category', 'product_cat' );
 
-		if ( ! in_array( $taxonomy, $allowed_taxonomies ) ) {
+		if ( ! in_array( $taxonomy, $allowed_taxonomies, true ) ) {
 			return;
 		}
 
@@ -79,17 +79,35 @@ class Sync_Posts {
 			return;
 		}
 
+		// Match bulk path behavior in ready_wp_category_contents_for_sync():
+		// skip terms with no description so live and bulk payloads stay in sync.
+		if ( empty( trim( (string) $term->description ) ) ) {
+			return;
+		}
+
+		// Build the full ancestry list so the remote API can reconstruct the taxonomy tree.
+		$ancestor_ids = array_merge(
+			array( (int) $term->term_id ),
+			array_map( 'intval', get_ancestors( $term->term_id, $taxonomy ) )
+		);
+
+		// Guard against terms whose rewrite rule produces a WP_Error (e.g. disabled rewrite).
+		$term_url = get_term_link( $term );
+		if ( is_wp_error( $term_url ) ) {
+			$term_url = '';
+		}
+
 		// Prepare term data in the specified format.
 		$term_data = array(
 			'_postId'    => $term->term_id,
-			'category'   => wp_json_encode( array( $term->term_id ) ),
+			'category'   => wp_json_encode( $ancestor_ids ),
 			'title'      => $term->name,
 			'content'    => $term->description,
 			'postType'   => 'Category Archive',
 			'postStatus' => 'publish',
 			'createdAt'  => current_time( 'mysql' ),
 			'updatedAt'  => current_time( 'mysql' ),
-			'url'        => get_term_link( $term ),
+			'url'        => $term_url,
 			'builder'    => 'classic',
 			'meta'       => null,
 		);
