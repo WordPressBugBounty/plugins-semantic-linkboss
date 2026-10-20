@@ -37,6 +37,7 @@ class Admin {
 	 */
 	public function dispatch_actions() {
 		new Classes\Auth();
+		new Classes\Connect();
 		new Classes\Settings();
 		new Classes\Dashboard();
 

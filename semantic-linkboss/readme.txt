@@ -5,7 +5,7 @@ Tags: internal linking, SEO, automation, link building, auto link
 Requires at least: 6.0
 Tested up to: 7.1.2
 Requires PHP: 7.4
-Stable tag: 2.8.5
+Stable tag: 2.8.6
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -78,11 +78,10 @@ https://youtu.be/bSn3sQdPsh0
 3.  Click **Install Now**, then **Activate**.
 
 = Configuration =
-1.  Get your API key from [app.linkboss.io](https://app.linkboss.io).
-2.  Go to **WordPress Dashboard → LinkBoss → API Settings**.
-3.  Enter your key and save.
-4.  Go to the **Sync** tab, click "Prepare Data," then "Sync Now."
-5.  Once synced, you can start building links!
+1.  Go to **WordPress Dashboard → LinkBoss → Connection**.
+2.  Click **Create Free Account & Connect** (or log in with your existing LinkBoss account) — your site connects automatically, no API key needed.
+3.  Click **Sync Now** to send your content to LinkBoss.
+4.  Once synced, you can start building links!
 
 Installation video guide:
 https://youtu.be/zVpQ9LfEAAk
@@ -131,6 +130,13 @@ Use the **Anchor Manager**. It highlights if you have used the exact same anchor
 
 == Changelog ==
 
+= 2.8.6 - October 20, 2026 =
+* Added: One-click connect — create a free LinkBoss account (email or Google) or log in right from the plugin; no API key to copy
+* Added: First sync starts automatically after connecting in the setup wizard
+* Added: Disconnect button on the Connection screen
+* Improved: Manual API-key connection kept as an "Advanced" fallback
+* Fixed: Excessive token-refresh requests when the live connection is unavailable
+
 = 2.8.5 - September 29, 2026 =
 * Improved: Category archive sync is improved for both plain WordPress and WooCommerce sites
 * Improved: Advanced Sync Settings toggle renamed from "WooCommerce Category Sync" to "Category Archive Sync"
@@ -162,6 +168,9 @@ Use the **Anchor Manager**. It highlights if you have used the exact same anchor
 [View complete changelog](https://linkboss.io/changelog)
 
 == Upgrade Notice ==
+
+= 2.8.6 =
+Connecting your site is now one click: create a free account or log in from the plugin, with no API key to copy. Existing connected sites keep working, no action needed.
 
 = 2.8.5 =
 Category archive sync is improved for both plain WordPress and WooCommerce sites.

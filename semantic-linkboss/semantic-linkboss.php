@@ -3,7 +3,7 @@
  * Plugin Name: LinkBoss - Semantic Internal Linking
  * Plugin URI: https://linkboss.io
  * Description: NLP, AI, and Machine Learning-powered semantic interlinking tool. Supports manual incoming/outgoing, SILO, and bulk auto internal links.
- * Version: 2.8.5
+ * Version: 2.8.6
  * Requires at least: 5.6
  * Requires PHP: 7.4
  * Author: ZVENTURES LLC
@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SEMANTIC_LB_VERSION', '2.8.5' );
+define( 'SEMANTIC_LB_VERSION', '2.8.6' );
 define( 'SEMANTIC_LB__FILE__', __FILE__ );
 define( 'SEMANTIC_LB_PATH', plugin_dir_path( SEMANTIC_LB__FILE__ ) );
 define( 'SEMANTIC_LB_URL', plugins_url( '/', SEMANTIC_LB__FILE__ ) );
@@ -45,6 +45,15 @@ define( 'SEMANTIC_LB_POSTS_SYNC_URL', SEMANTIC_LB_REMOTE_URL . 'sync' );
 define( 'SEMANTIC_LB_OPTIONS_URL', SEMANTIC_LB_REMOTE_URL . 'options' );
 define( 'SEMANTIC_LB_SYNC_INIT', SEMANTIC_LB_REMOTE_URL . 'sync/init' );
 define( 'SEMANTIC_LB_SYNC_FINISH', SEMANTIC_LB_REMOTE_URL . 'sync/fin' );
+
+if ( ! defined( 'SEMANTIC_LB_APP_ROOT_URL' ) ) {
+	define( 'SEMANTIC_LB_APP_ROOT_URL', 'https://app.linkboss.io' );
+}
+
+define( 'SEMANTIC_LB_APP_REGISTER_URL', SEMANTIC_LB_APP_ROOT_URL . '/register' );
+define( 'SEMANTIC_LB_APP_FORGOT_PASSWORD_URL', SEMANTIC_LB_APP_ROOT_URL . '/forgot-password' );
+define( 'SEMANTIC_LB_AUTH_LOGIN_URL', SEMANTIC_LB_REMOTE_ROOT_URL . '/api/v2/auth/connect/login' );
+define( 'SEMANTIC_LB_AUTH_CONNECT_URL', SEMANTIC_LB_REMOTE_ROOT_URL . '/api/v2/auth/connect/' );
 
 add_action( 'init', 'semantic_lb_i18n' );
 

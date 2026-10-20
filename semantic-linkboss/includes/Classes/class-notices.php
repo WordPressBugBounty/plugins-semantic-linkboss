@@ -146,16 +146,25 @@ class Notices {
 	 * @return void
 	 */
 	public function show_notices() {
-		if ( '' === get_option( 'linkboss_api_key' ) ) {
+		/**
+		 * The key option is deleted on disconnect & absent on
+		 * fresh installs, so check for any empty value
+		 */
+		if ( ! get_option( 'linkboss_api_key' ) ) {
 			$this->show_notice(
 				'error',
-				esc_html__( 'LinkBoss API Key is not set. Please connect your WordPress site with LinkBoss app by adding the API key from ', 'semantic-linkboss' ) . '<a href="' . admin_url( 'admin.php?page=semantic-linkboss' ) . '">' . esc_html__( 'Settings Tab', 'semantic-linkboss' ) . '</a>.'
+				esc_html__( 'LinkBoss is not connected. Please connect your WordPress site with LinkBoss by creating a free account or logging in from the ', 'semantic-linkboss' ) . '<a href="' . admin_url( 'admin.php?page=semantic-linkboss#settings' ) . '">' . esc_html__( 'Connection Tab', 'semantic-linkboss' ) . '</a>.'
+			);
+		} elseif ( ! Auth::get_access_token() ) {
+			$this->show_notice(
+				'error',
+				esc_html__( 'LinkBoss Access Token is not found. Please connect your WordPress site with LinkBoss from the ', 'semantic-linkboss' ) . '<a href="' . admin_url( 'admin.php?page=semantic-linkboss#settings' ) . '">' . esc_html__( 'Connection Tab', 'semantic-linkboss' ) . '</a>.'
 			);
 		}
-		if ( ! Auth::get_access_token() ) {
+		if ( get_option( 'linkboss_site_disconnected', false ) ) {
 			$this->show_notice(
-				'error',
-				esc_html__( 'LinkBoss Access Token is not found. Please connect your WordPress site with LinkBoss app by adding the API key from ', 'semantic-linkboss' ) . '<a href="' . admin_url( 'admin.php?page=semantic-linkboss' ) . '">' . esc_html__( 'Settings Tab', 'semantic-linkboss' ) . '</a>.'
+				'warning',
+				esc_html__( 'This site was removed from the LinkBoss app. Please reconnect it from the ', 'semantic-linkboss' ) . '<a href="' . admin_url( 'admin.php?page=semantic-linkboss#settings' ) . '">' . esc_html__( 'Connection Tab', 'semantic-linkboss' ) . '</a>.'
 			);
 		}
 	}

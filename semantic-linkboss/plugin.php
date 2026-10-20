@@ -111,11 +111,16 @@ final class Plugin {
 			'logo'         => SEMANTIC_LB_ASSETS_URL . 'imgs/logo.png',
 			'root_url'     => SEMANTIC_LB_URL,
 			'current_user' => array(
-				'domain'       => esc_url( home_url() ),
+				'domain'       => esc_url( get_site_url() ),
 				'display_name' => wp_get_current_user()->display_name,
 				'email'        => wp_get_current_user()->user_email,
 				'id'           => wp_get_current_user()->ID,
 				'avatar'       => get_avatar_url( wp_get_current_user()->ID ),
+			),
+			'connect'      => array(
+				'login_url'           => esc_url( SEMANTIC_LB_AUTH_LOGIN_URL ),
+				'forgot_password_url' => esc_url( SEMANTIC_LB_APP_FORGOT_PASSWORD_URL ),
+				'domain'              => esc_url( get_site_url() ),
 			),
 		);
 

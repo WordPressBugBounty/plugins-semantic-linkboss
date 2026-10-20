@@ -74,6 +74,7 @@ final class Core {
 		require_once SEMANTIC_LB_INC_PATH . 'class-admin.php';
 		require_once SEMANTIC_LB_INC_PATH . 'class-menu.php';
 		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-auth.php';
+		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-connect.php';
 		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-settings.php';
 		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-dashboard.php';
 		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-notices.php';

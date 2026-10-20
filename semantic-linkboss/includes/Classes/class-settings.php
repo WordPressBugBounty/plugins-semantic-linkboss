@@ -132,18 +132,11 @@ class Settings {
 		}
 
 		switch ( $action ) {
-			case 'api_key':
-				$api_key = get_option( 'linkboss_api_key', false );
-
-				if ( ! $api_key ) {
-					return new WP_Error( 'no_api_key', esc_html__( 'Oops, API key is not found.' ), array( 'status' => 404 ) );
-				}
-
+			case 'connection_status':
 				return rest_ensure_response(
 					array(
-						'status'  => 'success',
-						'message' => 'API Key fetched successfully',
-						'api_key' => $api_key,
+						'connected'         => (bool) get_option( 'linkboss_api_key', false ),
+						'site_disconnected' => (bool) get_option( 'linkboss_site_disconnected', false ),
 					),
 					200
 				);
@@ -580,7 +573,7 @@ class Settings {
 		
 		// Make the request to LinkBoss API
 		$response = wp_remote_post(
-			'https://api.linkboss.io/api/v2/wp/sync',
+			SEMANTIC_LB_POSTS_SYNC_URL,
 			array(
 				'headers' => $headers,
 				'body'    => $body,

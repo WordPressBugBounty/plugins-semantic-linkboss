@@ -71,7 +71,7 @@ class Auth {
 			'/' . $this->rest_base . '/refresh-token',
 			array(
 				'methods'             => WP_REST_Server::EDITABLE,
-				'callback'            => array( $this, 'refresh_access_token' ),
+				'callback'            => array( $this, 'rest_refresh_token' ),
 				'permission_callback' => array( $this, 'update_permissions_check' ),
 			)
 		);
@@ -155,32 +155,14 @@ class Auth {
 		}
 
 		/**
-		 * Prepare the request arguments
+		 * Exchange the API key for an access token
 		 */
-		$api_url      = SEMANTIC_LB_AUTH_URL;
-		$headers      = array(
-			'Content-Type'     => 'application/json',
-			'X-PLUGIN-VERSION' => SEMANTIC_LB_VERSION,
-		);
-		$body         = array(
-			'client'  => get_site_url(),
-			'api_key' => $api_key,
-		);
-		$request_args = array(
-			'headers' => $headers,
-			'body'    => wp_json_encode( $body ),
-			'method'  => 'POST',
-		);
+		$exchange = self::exchange_key_for_token( $api_key );
 
 		/**
-		 * Make the request
+		 * Handle transport failure
 		 */
-		$response = wp_remote_post( $api_url, $request_args );
-
-		/**
-		 * Handle the response
-		 */
-		if ( is_wp_error( $response ) ) {
+		if ( is_wp_error( $exchange ) ) {
 			return new WP_Error(
 				'rest_request_failed',
 				esc_html__( 'Failed to connect to the authentication server.', 'semantic-linkboss' ),
@@ -188,11 +170,8 @@ class Auth {
 			);
 		}
 
-		/**
-		 * Decode the response body
-		 */
-		$response_code = wp_remote_retrieve_response_code( $response );
-		$response_body = json_decode( wp_remote_retrieve_body( $response ) );
+		$response_code = $exchange['code'];
+		$response_body = $exchange['body'];
 
 		/**
 		 * Handle specific response codes
@@ -246,44 +225,54 @@ class Auth {
 
 
 	/**
+	 * REST: Refresh the Access Token for the socket
+	 *
+	 * @since 2.8.6
+	 */
+	public function rest_refresh_token() {
+		/**
+		 * Browser-triggered (socket reconnects), so refresh at
+		 * most once a minute per site — otherwise every open admin
+		 * tab hammers the auth API while the socket is unreachable
+		 */
+		if ( ! get_transient( 'linkboss_token_refresh_lock' ) ) {
+			set_transient( 'linkboss_token_refresh_lock', 1, MINUTE_IN_SECONDS );
+			self::refresh_access_token();
+		}
+
+		return rest_ensure_response(
+			array(
+				'access_token' => self::get_access_token(),
+			)
+		);
+	}
+
+	/**
 	 * Refresh Access Token by API KEY
 	 *
-	 * PATCH Request
+	 * Used by the refresh cron & disconnect retry.
 	 *
 	 * @since 0.0.5
 	 */
 	public static function refresh_access_token() {
-		$api_url = SEMANTIC_LB_AUTH_URL;
 		$api_key = get_option( 'linkboss_api_key', false );
 
 		if ( ! $api_key ) {
 			return;
 		}
 
-		$headers = array(
-			'Content-Type'     => 'application/json',
-			'method'           => 'POST',
-			'X-PLUGIN-VERSION' => SEMANTIC_LB_VERSION,
-		);
+		$exchange = self::exchange_key_for_token( $api_key );
 
-		$body = array(
-			'client'  => get_site_url(),
-			'api_key' => $api_key,
-		);
+		/**
+		 * Keep the current token when the exchange fails;
+		 * the next 401 response will retry silently.
+		 */
+		if ( is_wp_error( $exchange ) || 200 !== $exchange['code'] ) {
+			return;
+		}
 
-		$arg = array(
-			'headers' => $headers,
-			'body'    => wp_json_encode( $body, true ),
-			'method'  => 'POST',
-		);
-
-		$response = wp_remote_post( $api_url, $arg );
-		$res_body = json_decode( wp_remote_retrieve_body( $response ) );
-
-		// todo: handle error if ( wp_remote_retrieve_response_code( $response ) !== 200 )
-
-		if ( isset( $res_body->access ) ) {
-			self::set_access_token( $res_body->access );
+		if ( isset( $exchange['body']->access ) ) {
+			self::set_access_token( $exchange['body']->access );
 		}
 	}
 
@@ -299,40 +288,142 @@ class Auth {
 			return false;
 		}
 
-		$api_url = SEMANTIC_LB_AUTH_URL;
+		/**
+		 * Backoff for cron-side callers: this fires from wp-cron
+		 * paths that run on every page load, so without a lock a
+		 * broken api_key silently hammers /api/v2/auth forever.
+		 * Mirrors rest_refresh_token()'s 1/min lock but wider
+		 * because wp-cron runs on every page view.
+		 */
+		if ( get_transient( 'linkboss_auth_retry_lock' ) ) {
+			return false;
+		}
+		set_transient( 'linkboss_auth_retry_lock', 1, 5 * MINUTE_IN_SECONDS );
 
-		$headers = array(
-			'Content-Type'     => 'application/json',
-			'method'           => 'POST',
-			'X-PLUGIN-VERSION' => SEMANTIC_LB_VERSION,
-		);
+		$exchange = self::exchange_key_for_token( $api_key );
 
-		$body = array(
-			'client'  => get_site_url(),
-			'api_key' => $api_key,
-		);
+		if ( is_wp_error( $exchange ) ) {
+			return false;
+		}
 
-		$arg = array(
-			'headers' => $headers,
-			'body'    => wp_json_encode( $body, true ),
-			'method'  => 'POST',
-		);
-
-		$response = wp_remote_post( $api_url, $arg );
-		$res_body = json_decode( wp_remote_retrieve_body( $response ) );
-
-		$res_code = wp_remote_retrieve_response_code( $response );
-
-		if ( 405 === $res_code ) {
+		if ( 405 === $exchange['code'] ) {
 			update_option( 'linkboss_site_disconnected', true );
 			return false;
 		}
 
-		if ( isset( $res_body->access ) && 200 === $res_code ) {
-			self::set_access_token( $res_body->access );
+		if ( isset( $exchange['body']->access ) && 200 === $exchange['code'] ) {
+			self::set_access_token( $exchange['body']->access );
 			return true;
 		}
 
 		return false;
+	}
+
+	/**
+	 * POST to a LinkBoss auth endpoint as this site
+	 *
+	 * Adds the site identity (client) & plugin version.
+	 *
+	 * @param string $url     Auth endpoint URL.
+	 * @param array  $body    Request fields.
+	 * @param int    $timeout Request timeout in seconds.
+	 * @return array|WP_Error Raw response or WP_Error on transport failure.
+	 * @since 2.8.6
+	 */
+	private static function post_auth( $url, $body, $timeout = 5 ) {
+		return wp_remote_post(
+			$url,
+			array(
+				'headers' => array(
+					'Content-Type'     => 'application/json',
+					'X-PLUGIN-VERSION' => SEMANTIC_LB_VERSION,
+				),
+				'body'    => wp_json_encode( array_merge( array( 'client' => get_site_url() ), $body ) ),
+				'method'  => 'POST',
+				'timeout' => $timeout,
+			)
+		);
+	}
+
+	/**
+	 * Exchange an API Key for an Access Token
+	 *
+	 * Shared request helper for the auth endpoint.
+	 *
+	 * @param string $api_key The site API key.
+	 * @return array|WP_Error array( 'code' => int, 'body' => object ) or WP_Error on transport failure.
+	 * @since 2.8.6
+	 */
+	public static function exchange_key_for_token( $api_key ) {
+		$response = self::post_auth( SEMANTIC_LB_AUTH_URL, array( 'api_key' => $api_key ) );
+
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		return array(
+			'code' => (int) wp_remote_retrieve_response_code( $response ),
+			'body' => json_decode( wp_remote_retrieve_body( $response ) ),
+		);
+	}
+
+	/**
+	 * Exchange a one-time Connect Code for credentials
+	 *
+	 * Exchanges the connect code delivered by the LinkBoss app
+	 * redirect handshake for the site API key & access token.
+	 *
+	 * @param string $connect_code The one-time connect code.
+	 * @return true|WP_Error
+	 * @since 2.8.6
+	 */
+	public static function exchange_connect_code( $connect_code ) {
+		$response = self::post_auth( SEMANTIC_LB_AUTH_CONNECT_URL, array( 'connect_code' => $connect_code ), 15 );
+
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error(
+				'rest_request_failed',
+				esc_html__( 'Failed to connect to the authentication server.', 'semantic-linkboss' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$response_code = (int) wp_remote_retrieve_response_code( $response );
+		$response_body = json_decode( wp_remote_retrieve_body( $response ) );
+
+		if ( 200 !== $response_code ) {
+			$error_code = isset( $response_body->error ) ? sanitize_key( $response_body->error ) : 'api_error';
+			$message    = isset( $response_body->message ) ? $response_body->message : esc_html__( 'Connection failed.', 'semantic-linkboss' );
+
+			$error_data = array( 'status' => $response_code );
+
+			/**
+			 * The already_registered exchange error carries the
+			 * masked owner name to show in the admin notice
+			 */
+			if ( isset( $response_body->display_name ) ) {
+				$error_data['display_name'] = sanitize_text_field( $response_body->display_name );
+			}
+
+			return new WP_Error(
+				$error_code,
+				wp_kses_post( $message ),
+				$error_data
+			);
+		}
+
+		if ( ! isset( $response_body->access ) || ! isset( $response_body->api_key ) ) {
+			return new WP_Error(
+				'api_error',
+				esc_html__( 'Invalid response from the authentication server.', 'semantic-linkboss' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		self::set_access_token( $response_body->access );
+		update_option( 'linkboss_api_key', sanitize_text_field( $response_body->api_key ) );
+		delete_option( 'linkboss_site_disconnected' );
+
+		return true;
 	}
 }
