@@ -531,6 +531,15 @@ class Sync_Posts_Api extends Sync_Posts {
 		 */
 		delete_option( 'linkboss_force_sync' );
 
+		/**
+		 * Remember the first completed sync (gates the data
+		 * sharing opt-in until the user has seen it work)
+		 */
+		if ( ! get_option( 'linkboss_first_sync_done' ) ) {
+			update_option( 'linkboss_first_sync_done', time(), false );
+		}
+		update_option( 'linkboss_last_sync_done', time(), false );
+
 		return rest_ensure_response(
 			array(
 				'status'  => 'success',

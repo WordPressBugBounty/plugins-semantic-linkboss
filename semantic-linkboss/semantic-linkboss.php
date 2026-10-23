@@ -3,7 +3,7 @@
  * Plugin Name: LinkBoss - Semantic Internal Linking
  * Plugin URI: https://linkboss.io
  * Description: NLP, AI, and Machine Learning-powered semantic interlinking tool. Supports manual incoming/outgoing, SILO, and bulk auto internal links.
- * Version: 2.8.6
+ * Version: 2.8.7
  * Requires at least: 5.6
  * Requires PHP: 7.4
  * Author: ZVENTURES LLC
@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SEMANTIC_LB_VERSION', '2.8.6' );
+define( 'SEMANTIC_LB_VERSION', '2.8.7' );
 define( 'SEMANTIC_LB__FILE__', __FILE__ );
 define( 'SEMANTIC_LB_PATH', plugin_dir_path( SEMANTIC_LB__FILE__ ) );
 define( 'SEMANTIC_LB_URL', plugins_url( '/', SEMANTIC_LB__FILE__ ) );
@@ -190,28 +190,36 @@ if ( ! function_exists( 'dci_plugin_semantic_lb' ) ) {
 		wp_register_style( 'dci-sdk-linkboss', SEMANTIC_LB_URL . 'dci/assets/css/dci.css', array(), '1.3.0', 'all' );
 		wp_enqueue_style( 'dci-sdk-linkboss' );
 
-		dci_dynamic_init(
-			array(
-				'sdk_version'          => '1.2.1',
-				'product_id'           => 1,
-				'plugin_name'          => 'LinkBoss', // make simple, must not empty
-				'plugin_title'         => 'Love using LinkBoss? Congrats 🎉  ( Never miss an Important Update )',
-				'plugin_icon'          => SEMANTIC_LB_ASSETS_URL . 'imgs/linkboss-icon.png',
-				'api_endpoint'         => 'https://plugin.linkboss.io/wp-json/dci/v1/data-insights',
-				'slug'                 => 'semantic-linkboss',
-				'core_file'            => 'semantic-linkboss',
-				'menu'                 => array(
-					'slug' => 'semantic-linkboss',
-				),
-				'public_key'           => 'pk_YBHttccXCO43DOSBEurwdrHkeEjlxpED',
-				'is_premium'           => true,
-				'popup_notice'         => false,
-				'deactivate_feedback'  => true,
-				'plugin_deactivate_id' => 'semantic-linkboss',
-				'text_domain'          => 'semantic-linkboss',
-				'plugin_msg'           => '<p>Be Top-contributor by sharing non-sensitive plugin data and create an impact to the global WordPress community today! You can receive valuable emails periodically.</p>',
-			)
+		$dci_params = array(
+			'sdk_version'          => '1.2.1',
+			'product_id'           => 1,
+			'plugin_name'          => 'LinkBoss', // make simple, must not empty
+			'plugin_title'         => 'Love using LinkBoss? Congrats 🎉  ( Never miss an Important Update )',
+			'plugin_icon'          => SEMANTIC_LB_ASSETS_URL . 'imgs/linkboss-icon.png',
+			'api_endpoint'         => 'https://plugin.linkboss.io/wp-json/dci/v1/data-insights',
+			'slug'                 => 'semantic-linkboss',
+			'core_file'            => 'semantic-linkboss',
+			'menu'                 => array(
+				'slug' => 'semantic-linkboss',
+			),
+			'public_key'           => 'pk_YBHttccXCO43DOSBEurwdrHkeEjlxpED',
+			'is_premium'           => true,
+			'popup_notice'         => false,
+			'deactivate_feedback'  => true,
+			'plugin_deactivate_id' => 'semantic-linkboss',
+			'text_domain'          => 'semantic-linkboss',
+			'plugin_msg'           => '<p>Be Top-contributor by sharing non-sensitive plugin data and create an impact to the global WordPress community today! You can receive valuable emails periodically.</p>',
 		);
+
+		/**
+		 * Hold the data sharing opt-in until the first sync has
+		 * finished, so it never competes with the setup wizard
+		 */
+		if ( ! get_option( 'linkboss_first_sync_done' ) ) {
+			$dci_params['delay_time'] = array( 'time' => 10 * YEAR_IN_SECONDS );
+		}
+
+		dci_dynamic_init( $dci_params );
 	}
 	add_action( 'admin_init', 'dci_plugin_semantic_lb' );
 }
@@ -225,6 +233,17 @@ if ( ! function_exists( 'dci_plugin_semantic_lb' ) ) {
 if ( ! function_exists( 'semantic_lb_activation_redirect' ) ) {
 	function semantic_lb_activation_redirect( $plugin ) {
 		if ( plugin_basename( __FILE__ ) === $plugin ) {
+			/**
+			 * Never redirect (exit) during WP-CLI or bulk activation:
+			 * it would stop the remaining plugins from activating
+			 */
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$is_bulk = isset( $_REQUEST['action'] ) && 'activate-selected' === sanitize_key( wp_unslash( $_REQUEST['action'] ) );
+
+			if ( ( defined( 'WP_CLI' ) && WP_CLI ) || $is_bulk || wp_doing_ajax() ) {
+				return;
+			}
+
 			$setup_wizard = get_option( 'linkboss_setup_wizard' );
 
 			if ( ! $setup_wizard ) {

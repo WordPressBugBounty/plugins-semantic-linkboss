@@ -105,7 +105,7 @@
   --tw-contain-paint:  ;
   --tw-contain-style:  ;
 }/*
-! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
+! tailwindcss v3.4.19 | MIT License | https://tailwindcss.com
 *//*
 1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
 2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
@@ -592,9 +592,6 @@ video {
 .semantic-linkboss .right-0 {
   right: 0px;
 }
-.semantic-linkboss .right-3 {
-  right: 0.75rem;
-}
 .semantic-linkboss .start-0 {
   inset-inline-start: 0px;
 }
@@ -603,9 +600,6 @@ video {
 }
 .semantic-linkboss .top-1\/2 {
   top: 50%;
-}
-.semantic-linkboss .top-3 {
-  top: 0.75rem;
 }
 .semantic-linkboss .top-full {
   top: 100%;
@@ -626,6 +620,10 @@ video {
 .semantic-linkboss .-my-1\.5 {
   margin-top: -0.375rem;
   margin-bottom: -0.375rem;
+}
+.semantic-linkboss .mx-1 {
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
 }
 .semantic-linkboss .mx-4 {
   margin-left: 1rem;
@@ -662,17 +660,11 @@ video {
 .semantic-linkboss .mb-1 {
   margin-bottom: 0.25rem;
 }
-.semantic-linkboss .mb-1\.5 {
-  margin-bottom: 0.375rem;
-}
 .semantic-linkboss .mb-12 {
   margin-bottom: 3rem;
 }
 .semantic-linkboss .mb-2 {
   margin-bottom: 0.5rem;
-}
-.semantic-linkboss .mb-2\.5 {
-  margin-bottom: 0.625rem;
 }
 .semantic-linkboss .mb-3 {
   margin-bottom: 0.75rem;
@@ -700,9 +692,6 @@ video {
 }
 .semantic-linkboss .ml-auto {
   margin-left: auto;
-}
-.semantic-linkboss .mr-1\.5 {
-  margin-right: 0.375rem;
 }
 .semantic-linkboss .mr-2 {
   margin-right: 0.5rem;
@@ -773,6 +762,9 @@ video {
 .semantic-linkboss .inline-flex {
   display: inline-flex;
 }
+.semantic-linkboss .table {
+  display: table;
+}
 .semantic-linkboss .grid {
   display: grid;
 }
@@ -796,6 +788,9 @@ video {
 }
 .semantic-linkboss .h-16 {
   height: 4rem;
+}
+.semantic-linkboss .h-2 {
+  height: 0.5rem;
 }
 .semantic-linkboss .h-3 {
   height: 0.75rem;
@@ -834,6 +829,9 @@ video {
   height: -moz-max-content;
   height: max-content;
 }
+.semantic-linkboss .h-px {
+  height: 1px;
+}
 .semantic-linkboss .min-h-\[20rem\] {
   min-height: 20rem;
 }
@@ -854,6 +852,9 @@ video {
 }
 .semantic-linkboss .w-16 {
   width: 4rem;
+}
+.semantic-linkboss .w-2 {
+  width: 0.5rem;
 }
 .semantic-linkboss .w-3 {
   width: 0.75rem;
@@ -965,9 +966,6 @@ video {
 .semantic-linkboss .resize {
   resize: both;
 }
-.semantic-linkboss .list-inside {
-  list-style-position: inside;
-}
 .semantic-linkboss .list-none {
   list-style-type: none;
 }
@@ -1052,10 +1050,10 @@ video {
   margin-top: calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(0.25rem * var(--tw-space-y-reverse));
 }
-.semantic-linkboss :is(.space-y-1\.5 > :not([hidden]) ~ :not([hidden])) {
+.semantic-linkboss :is(.space-y-2 > :not([hidden]) ~ :not([hidden])) {
   --tw-space-y-reverse: 0;
-  margin-top: calc(0.375rem * calc(1 - var(--tw-space-y-reverse)));
-  margin-bottom: calc(0.375rem * var(--tw-space-y-reverse));
+  margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.5rem * var(--tw-space-y-reverse));
 }
 .semantic-linkboss :is(.space-y-3 > :not([hidden]) ~ :not([hidden])) {
   --tw-space-y-reverse: 0;
@@ -1117,10 +1115,6 @@ video {
 .semantic-linkboss .rounded-b-xl {
   border-bottom-right-radius: 0.75rem;
   border-bottom-left-radius: 0.75rem;
-}
-.semantic-linkboss .rounded-r-lg {
-  border-top-right-radius: 0.5rem;
-  border-bottom-right-radius: 0.5rem;
 }
 .semantic-linkboss .rounded-t-lg {
   border-top-left-radius: 0.5rem;
@@ -1207,6 +1201,10 @@ video {
 .semantic-linkboss .border-green-600 {
   --tw-border-opacity: 1;
   border-color: rgb(22 163 74 / var(--tw-border-opacity, 1));
+}
+.semantic-linkboss .border-indigo-200 {
+  --tw-border-opacity: 1;
+  border-color: rgb(199 210 254 / var(--tw-border-opacity, 1));
 }
 .semantic-linkboss .border-indigo-600 {
   --tw-border-opacity: 1;
@@ -1313,6 +1311,10 @@ video {
 .semantic-linkboss .bg-green-700 {
   --tw-bg-opacity: 1;
   background-color: rgb(21 128 61 / var(--tw-bg-opacity, 1));
+}
+.semantic-linkboss .bg-indigo-50 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(238 242 255 / var(--tw-bg-opacity, 1));
 }
 .semantic-linkboss .bg-indigo-600 {
   --tw-bg-opacity: 1;
@@ -1510,6 +1512,9 @@ video {
 .semantic-linkboss .pe-10 {
   padding-inline-end: 2.5rem;
 }
+.semantic-linkboss .pe-11 {
+  padding-inline-end: 2.75rem;
+}
 .semantic-linkboss .pe-3 {
   padding-inline-end: 0.75rem;
 }
@@ -1521,9 +1526,6 @@ video {
 }
 .semantic-linkboss .pr-3 {
   padding-right: 0.75rem;
-}
-.semantic-linkboss .pr-6 {
-  padding-right: 1.5rem;
 }
 .semantic-linkboss .ps-10 {
   padding-inline-start: 2.5rem;
@@ -1601,6 +1603,9 @@ video {
 .semantic-linkboss .font-semibold {
   font-weight: 600;
 }
+.semantic-linkboss .uppercase {
+  text-transform: uppercase;
+}
 .semantic-linkboss .leading-none {
   line-height: 1;
 }
@@ -1627,6 +1632,14 @@ video {
 .semantic-linkboss .text-amber-700 {
   --tw-text-opacity: 1;
   color: rgb(180 83 9 / var(--tw-text-opacity, 1));
+}
+.semantic-linkboss .text-amber-800 {
+  --tw-text-opacity: 1;
+  color: rgb(146 64 14 / var(--tw-text-opacity, 1));
+}
+.semantic-linkboss .text-amber-900 {
+  --tw-text-opacity: 1;
+  color: rgb(120 53 15 / var(--tw-text-opacity, 1));
 }
 .semantic-linkboss .text-black {
   --tw-text-opacity: 1;
@@ -1700,9 +1713,25 @@ video {
   --tw-text-opacity: 1;
   color: rgb(22 101 52 / var(--tw-text-opacity, 1));
 }
+.semantic-linkboss .text-green-900 {
+  --tw-text-opacity: 1;
+  color: rgb(20 83 45 / var(--tw-text-opacity, 1));
+}
 .semantic-linkboss .text-indigo-600 {
   --tw-text-opacity: 1;
   color: rgb(79 70 229 / var(--tw-text-opacity, 1));
+}
+.semantic-linkboss .text-indigo-700 {
+  --tw-text-opacity: 1;
+  color: rgb(67 56 202 / var(--tw-text-opacity, 1));
+}
+.semantic-linkboss .text-indigo-800 {
+  --tw-text-opacity: 1;
+  color: rgb(55 48 163 / var(--tw-text-opacity, 1));
+}
+.semantic-linkboss .text-indigo-900 {
+  --tw-text-opacity: 1;
+  color: rgb(49 46 129 / var(--tw-text-opacity, 1));
 }
 .semantic-linkboss .text-red-400 {
   --tw-text-opacity: 1;
@@ -1817,6 +1846,10 @@ video {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(209 213 219 / var(--tw-ring-opacity, 1));
 }
+.semantic-linkboss .ring-indigo-300 {
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(165 180 252 / var(--tw-ring-opacity, 1));
+}
 .semantic-linkboss .ring-white {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(255 255 255 / var(--tw-ring-opacity, 1));
@@ -1829,9 +1862,7 @@ video {
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
 .semantic-linkboss .transition {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-backdrop-filter;
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-backdrop-filter;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }
@@ -1959,10 +1990,6 @@ video {
   --tw-bg-opacity: 1;
   background-color: rgb(191 219 254 / var(--tw-bg-opacity, 1));
 }
-.semantic-linkboss .hover\:bg-blue-700:hover {
-  --tw-bg-opacity: 1;
-  background-color: rgb(29 78 216 / var(--tw-bg-opacity, 1));
-}
 .semantic-linkboss .hover\:bg-blue-800:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(30 64 175 / var(--tw-bg-opacity, 1));
@@ -1975,6 +2002,10 @@ video {
   --tw-bg-opacity: 1;
   background-color: rgb(229 231 235 / var(--tw-bg-opacity, 1));
 }
+.semantic-linkboss .hover\:bg-gray-50:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(249 250 251 / var(--tw-bg-opacity, 1));
+}
 .semantic-linkboss .hover\:bg-green-200:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(187 247 208 / var(--tw-bg-opacity, 1));
@@ -1986,6 +2017,10 @@ video {
 .semantic-linkboss .hover\:bg-green-700:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(21 128 61 / var(--tw-bg-opacity, 1));
+}
+.semantic-linkboss .hover\:bg-indigo-100:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(224 231 255 / var(--tw-bg-opacity, 1));
 }
 .semantic-linkboss .hover\:bg-indigo-500:hover {
   --tw-bg-opacity: 1;
@@ -2018,10 +2053,6 @@ video {
 .semantic-linkboss .hover\:bg-yellow-200:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(254 240 138 / var(--tw-bg-opacity, 1));
-}
-.semantic-linkboss .hover\:text-blue-800:hover {
-  --tw-text-opacity: 1;
-  color: rgb(30 64 175 / var(--tw-text-opacity, 1));
 }
 .semantic-linkboss .hover\:text-gray-600:hover {
   --tw-text-opacity: 1;
@@ -2187,6 +2218,10 @@ video {
   --tw-border-opacity: 1;
   border-color: rgb(180 83 9 / var(--tw-border-opacity, 1));
 }
+.semantic-linkboss .dark\:border-amber-800:is(.dark *) {
+  --tw-border-opacity: 1;
+  border-color: rgb(146 64 14 / var(--tw-border-opacity, 1));
+}
 .semantic-linkboss .dark\:border-blue-500:is(.dark *) {
   --tw-border-opacity: 1;
   border-color: rgb(59 130 246 / var(--tw-border-opacity, 1));
@@ -2231,6 +2266,10 @@ video {
   --tw-border-opacity: 1;
   border-color: rgb(67 56 202 / var(--tw-border-opacity, 1));
 }
+.semantic-linkboss .dark\:border-indigo-800:is(.dark *) {
+  --tw-border-opacity: 1;
+  border-color: rgb(55 48 163 / var(--tw-border-opacity, 1));
+}
 .semantic-linkboss .dark\:border-red-500:is(.dark *) {
   --tw-border-opacity: 1;
   border-color: rgb(239 68 68 / var(--tw-border-opacity, 1));
@@ -2262,16 +2301,12 @@ video {
   --tw-bg-opacity: 1;
   background-color: rgb(37 99 235 / var(--tw-bg-opacity, 1));
 }
-.semantic-linkboss .dark\:bg-blue-700:is(.dark *) {
-  --tw-bg-opacity: 1;
-  background-color: rgb(29 78 216 / var(--tw-bg-opacity, 1));
-}
 .semantic-linkboss .dark\:bg-blue-900:is(.dark *) {
   --tw-bg-opacity: 1;
   background-color: rgb(30 58 138 / var(--tw-bg-opacity, 1));
 }
-.semantic-linkboss .dark\:bg-blue-900\/30:is(.dark *) {
-  background-color: rgb(30 58 138 / 0.3);
+.semantic-linkboss .dark\:bg-blue-900\/20:is(.dark *) {
+  background-color: rgb(30 58 138 / 0.2);
 }
 .semantic-linkboss .dark\:bg-gray-400:is(.dark *) {
   --tw-bg-opacity: 1;
@@ -2314,6 +2349,9 @@ video {
   --tw-bg-opacity: 1;
   background-color: rgb(67 56 202 / var(--tw-bg-opacity, 1));
 }
+.semantic-linkboss .dark\:bg-indigo-900\/20:is(.dark *) {
+  background-color: rgb(49 46 129 / 0.2);
+}
 .semantic-linkboss .dark\:bg-red-700:is(.dark *) {
   --tw-bg-opacity: 1;
   background-color: rgb(185 28 28 / var(--tw-bg-opacity, 1));
@@ -2334,6 +2372,10 @@ video {
 }
 .semantic-linkboss .dark\:bg-yellow-900\/30:is(.dark *) {
   background-color: rgb(113 63 18 / 0.3);
+}
+.semantic-linkboss .dark\:text-amber-200:is(.dark *) {
+  --tw-text-opacity: 1;
+  color: rgb(253 230 138 / var(--tw-text-opacity, 1));
 }
 .semantic-linkboss .dark\:text-amber-300:is(.dark *) {
   --tw-text-opacity: 1;
@@ -2383,6 +2425,10 @@ video {
   --tw-text-opacity: 1;
   color: rgb(107 114 128 / var(--tw-text-opacity, 1));
 }
+.semantic-linkboss .dark\:text-gray-600:is(.dark *) {
+  --tw-text-opacity: 1;
+  color: rgb(75 85 99 / var(--tw-text-opacity, 1));
+}
 .semantic-linkboss .dark\:text-green-200:is(.dark *) {
   --tw-text-opacity: 1;
   color: rgb(187 247 208 / var(--tw-text-opacity, 1));
@@ -2394,6 +2440,14 @@ video {
 .semantic-linkboss .dark\:text-green-400:is(.dark *) {
   --tw-text-opacity: 1;
   color: rgb(74 222 128 / var(--tw-text-opacity, 1));
+}
+.semantic-linkboss .dark\:text-indigo-200:is(.dark *) {
+  --tw-text-opacity: 1;
+  color: rgb(199 210 254 / var(--tw-text-opacity, 1));
+}
+.semantic-linkboss .dark\:text-indigo-300:is(.dark *) {
+  --tw-text-opacity: 1;
+  color: rgb(165 180 252 / var(--tw-text-opacity, 1));
 }
 .semantic-linkboss .dark\:text-indigo-400:is(.dark *) {
   --tw-text-opacity: 1;
@@ -2442,6 +2496,10 @@ video {
 .semantic-linkboss .dark\:ring-gray-800:is(.dark *) {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(31 41 55 / var(--tw-ring-opacity, 1));
+}
+.semantic-linkboss .dark\:ring-indigo-700:is(.dark *) {
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(67 56 202 / var(--tw-ring-opacity, 1));
 }
 .semantic-linkboss .dark\:ring-offset-gray-800:is(.dark *) {
   --tw-ring-offset-color: #1f2937;
@@ -2493,6 +2551,9 @@ video {
   --tw-bg-opacity: 1;
   background-color: rgb(55 48 163 / var(--tw-bg-opacity, 1));
 }
+.semantic-linkboss .dark\:hover\:bg-indigo-900\/40:hover:is(.dark *) {
+  background-color: rgb(49 46 129 / 0.4);
+}
 .semantic-linkboss .dark\:hover\:bg-red-600:hover:is(.dark *) {
   --tw-bg-opacity: 1;
   background-color: rgb(220 38 38 / var(--tw-bg-opacity, 1));
@@ -2501,16 +2562,8 @@ video {
   --tw-bg-opacity: 1;
   background-color: rgb(185 28 28 / var(--tw-bg-opacity, 1));
 }
-.semantic-linkboss .dark\:hover\:bg-red-800:hover:is(.dark *) {
-  --tw-bg-opacity: 1;
-  background-color: rgb(153 27 27 / var(--tw-bg-opacity, 1));
-}
 .semantic-linkboss .dark\:hover\:bg-red-900\/30:hover:is(.dark *) {
   background-color: rgb(127 29 29 / 0.3);
-}
-.semantic-linkboss .dark\:hover\:text-blue-200:hover:is(.dark *) {
-  --tw-text-opacity: 1;
-  color: rgb(191 219 254 / var(--tw-text-opacity, 1));
 }
 .semantic-linkboss .dark\:hover\:text-gray-200:hover:is(.dark *) {
   --tw-text-opacity: 1;

@@ -169,6 +169,7 @@ class Init {
 				// $result is now an array with 'status' and 'skipped' keys
 				$status = isset( $result['status'] ) ? $result['status'] : 'complete';
 				$skipped = isset( $result['skipped'] ) ? $result['skipped'] : 0;
+				$prepared = isset( $result['prepared'] ) ? (int) $result['prepared'] : 0;
 
 				if ($status === 'no_posts') {
 					// No more posts to process
@@ -188,6 +189,7 @@ class Init {
 							'message' => 'The contents are prepared, please press the Sync button below.',
 							'has_post' => true,
 							'skipped' => $skipped,
+							'prepared' => $prepared,
 						),
 						200
 					);
@@ -263,18 +265,20 @@ class Init {
 			$processed_all_urls = true;
 
 			// Get post IDs from URLs
-			// Get removed URLs list
-			$removed_urls = get_option( 'linkboss_removed_urls', array() );
-
 			foreach ($urls as $url) {
-				// Skip URLs that are in the removed list
-				if ( in_array( $url, $removed_urls ) ) {
+				// Skip URLs that are on the "Excluded from sync" list
+				if ( Sync_Exclusions::is_excluded_url( $url ) ) {
 					$skipped_count++;
 					continue;
 				}
 
 				// Use the enhanced URL to post ID function
 				$post_id = $sync_posts->enhanced_url_to_postid($url);
+
+				if ( $post_id > 0 && Sync_Exclusions::is_excluded( $post_id ) ) {
+					$skipped_count++;
+					continue;
+				}
 
 				if ($post_id > 0) {
 					// Check if this post is already in the sync batch table
@@ -380,6 +384,12 @@ class Init {
 
 			$post_type_query_string = implode( ', ', $post_type_query_escaped );
 
+			/**
+			 * Give excluded posts an 'X' row first, so the LEFT JOIN
+			 * below doesn't pick them up again on every pass
+			 */
+			Sync_Exclusions::mark_excluded_rows();
+
 			$sql = "SELECT p.ID, p.post_type, p.post_content, p.post_status
 					FROM {$wpdb->prefix}posts p
 					LEFT JOIN {$wpdb->prefix}linkboss_sync_batch l ON p.ID = l.post_id
@@ -390,20 +400,15 @@ class Init {
 			// phpcs:ignore
 			$posts = $wpdb->get_results( $sql, ARRAY_A );
 
-			// Filter out posts whose URLs are in the removed list
-			$removed_urls = get_option( 'linkboss_removed_urls', array() );
-			if ( ! empty( $removed_urls ) ) {
-				$posts_before_filter = count( $posts );
-				$posts = array_filter( $posts, function( $post ) use ( $removed_urls, &$skipped_count ) {
-					$post_url = get_permalink( $post['ID'] );
-					if ( in_array( $post_url, $removed_urls ) ) {
-						$skipped_count++;
-						return false;
-					}
-					return true;
-				} );
-				$posts = array_values( $posts ); // Re-index array
-			}
+			// Filter out posts on the "Excluded from sync" list
+			$posts = array_filter( $posts, function( $post ) use ( &$skipped_count ) {
+				if ( Sync_Exclusions::is_excluded( $post['ID'] ) ) {
+					$skipped_count++;
+					return false;
+				}
+				return true;
+			} );
+			$posts = array_values( $posts ); // Re-index array
 		}
 
 		/**
@@ -486,6 +491,7 @@ class Init {
 			return array(
 				'status' => 'in_progress',
 				'skipped' => $skipped_count,
+				'prepared' => count( $posts ),
 			);
 		}
 	}
@@ -495,6 +501,64 @@ class Init {
 	 *
 	 * @since 2.7.0
 	 */
+	/**
+	 * Excluded posts that the report totals would otherwise count
+	 *
+	 * Same scope as report_pages_count() / report_posts_count():
+	 * published pages (when pages are synced) and published posts of the
+	 * synced post types, within the category filter.
+	 *
+	 * @since 2.8.7
+	 * @param object $obj Init instance (Global_Functions).
+	 * @return array { pages: int, posts: int }
+	 */
+	private static function excluded_in_scope( $obj ) {
+		$counts = array(
+			'pages' => 0,
+			'posts' => 0,
+		);
+
+		$ids = Sync_Exclusions::get_excluded_post_ids();
+
+		if ( empty( $ids ) ) {
+			return $counts;
+		}
+
+		if ( (int) $obj->report_pages_count() > 0 ) {
+			foreach ( $ids as $id ) {
+				if ( 'page' === get_post_type( $id ) && 'publish' === get_post_status( $id ) ) {
+					++$counts['pages'];
+				}
+			}
+		}
+
+		$query_data = get_option( 'linkboss_custom_query', false );
+		$post_types = isset( $query_data['post_sources'] ) && ! empty( $query_data['post_sources'] ) ? $query_data['post_sources'] : array( 'post' );
+		$post_types = array_values( array_diff( $post_types, array( 'page' ) ) );
+
+		if ( ! empty( $post_types ) ) {
+			$args = array(
+				'post_type'      => $post_types,
+				'post_status'    => array( 'publish' ),
+				'post__in'       => $ids,
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'tax_query'      => array( 'relation' => 'OR' ), // phpcs:ignore
+			);
+
+			$cat = isset( $query_data['__categories'] ) ? $query_data['__categories'] : '';
+
+			if ( ! empty( $cat ) ) {
+				$args['tax_query'] = array_merge( $args['tax_query'], $cat ); // phpcs:ignore
+			}
+
+			$counts['posts'] = count( ( new \WP_Query( $args ) )->posts );
+		}
+
+		return $counts;
+	}
+
 	public static function sync_batch_init_reports() {
 
 		$reports = array();
@@ -513,6 +577,7 @@ class Init {
 			$url_list = isset( $query_data['url_list'] ) ? $query_data['url_list'] : '';
 			$urls = array_filter(array_map('trim', explode("\n", $url_list)));
 			$valid_urls_count = 0;
+			$excluded_urls_count = 0;
 
 			// Create an instance of Sync_Posts to use the enhanced URL to post ID function
 			$sync_posts = new \SEMANTIC_LB\Classes\Sync_Posts();
@@ -520,12 +585,19 @@ class Init {
 			// Count valid URLs (those that resolve to post IDs and are not removed)
 			foreach ($urls as $url) {
 				// Skip removed URLs
-				if ( in_array( $url, $removed_urls ) ) {
+				if ( Sync_Exclusions::is_excluded_url( $url ) ) {
+					++$excluded_urls_count;
 					continue;
 				}
 
 				if (!empty($url)) {
 					$post_id = $sync_posts->enhanced_url_to_postid($url);
+
+					if ( $post_id > 0 && Sync_Exclusions::is_excluded( $post_id ) ) {
+						++$excluded_urls_count;
+						continue;
+					}
+
 					if ($post_id > 0) {
 						$valid_urls_count++;
 						$post = get_post($post_id);
@@ -536,6 +608,7 @@ class Init {
 			$reports['urls'] = $valid_urls_count;
 			$reports['pages'] = 0; // Not relevant for URL syncing
 			$reports['posts'] = 0; // Not relevant for URL syncing
+			$reports['excluded'] = $excluded_urls_count;
 		} else {
 			// For post type-based syncing (original behavior)
 			/**
@@ -544,8 +617,15 @@ class Init {
 			 * Global Function Class
 			 */
 			$obj = new self();
-			$reports['pages'] = (int) $obj->report_pages_count();
-			$reports['posts'] = (int) $obj->report_posts_count();
+			$excluded = self::excluded_in_scope( $obj );
+
+			/**
+			 * Excluded posts are never synced: leave them out of the
+			 * totals, or they show up as waiting / Queue Remaining forever
+			 */
+			$reports['pages'] = max( 0, (int) $obj->report_pages_count() - $excluded['pages'] );
+			$reports['posts'] = max( 0, (int) $obj->report_posts_count() - $excluded['posts'] );
+			$reports['excluded'] = $excluded['pages'] + $excluded['posts'];
 			$reports['urls'] = 0; // Not relevant for post type syncing
 		}
 
@@ -556,7 +636,7 @@ class Init {
 		$table_name = $wpdb->prefix . 'linkboss_sync_batch';
 
 		// phpcs:ignore
-		$total_batch_query = "SELECT COUNT(*) FROM {$table_name} WHERE post_status = 'publish' OR post_status = 'trash'";
+		$total_batch_query = "SELECT COUNT(*) FROM {$table_name} WHERE (post_status = 'publish' OR post_status = 'trash') AND (sent_status IS NULL OR sent_status <> 'X')";
 		// phpcs:ignore
 		$reports['total_queue_batch'] = (int) $wpdb->get_var( $total_batch_query );
 
@@ -589,7 +669,7 @@ class Init {
 			}
 		} else {
 			// For post type-based syncing (original behavior)
-			$reports['queue_remaining'] = (int) $reports['pages'] + (int) $reports['posts'] - (int) $reports['total_queue_batch'];
+			$reports['queue_remaining'] = max( 0, (int) $reports['pages'] + (int) $reports['posts'] - (int) $reports['total_queue_batch'] );
 		}
 
 		// Content size
@@ -621,6 +701,12 @@ class Init {
 		} else {
 			$reports['total_categories'] = (int) $obj->report_total_categories();
 		}
+
+		/**
+		 * Last completed sync (unix time, 0 = never), for the
+		 * Sync tab status card
+		 */
+		$reports['last_sync'] = (int) get_option( 'linkboss_last_sync_done', 0 );
 
 		return $reports;
 	}

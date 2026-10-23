@@ -79,6 +79,7 @@ final class Core {
 		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-dashboard.php';
 		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-notices.php';
 		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-sync-posts.php';
+		require_once SEMANTIC_LB_INC_PATH . 'Classes/class-sync-exclusions.php';
 
 		$api_valid = get_option( 'linkboss_api_key', false );
 

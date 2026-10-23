@@ -25,7 +25,44 @@ class Sync_Posts {
 	use Global_Functions;
 
 	public static $show_msg   = false;
-	public static $sync_speed = 10;
+	public static $sync_speed = 5;
+
+	/**
+	 * Sync speed choices (contents per batch) & the default
+	 *
+	 * @since 2.8.7
+	 */
+	const SYNC_SPEEDS        = array( 1, 5, 10, 20, 30 );
+	const DEFAULT_SYNC_SPEED = 5;
+
+	/**
+	 * Saved sync speed, snapped to an allowed choice
+	 *
+	 * Not saved → the default; anything else (e.g. the old 50) →
+	 * the largest choice that isn't above it.
+	 *
+	 * @since 2.8.7
+	 * @param mixed $value Raw value; the saved option when null.
+	 * @return int
+	 */
+	public static function get_sync_speed( $value = null ) {
+		$value = null === $value ? get_option( 'linkboss_sync_speed', self::DEFAULT_SYNC_SPEED ) : $value;
+		$value = (int) $value;
+
+		if ( $value <= 0 ) {
+			return self::DEFAULT_SYNC_SPEED;
+		}
+
+		$speed = self::SYNC_SPEEDS[0];
+
+		foreach ( self::SYNC_SPEEDS as $choice ) {
+			if ( $choice <= $value ) {
+				$speed = $choice;
+			}
+		}
+
+		return $speed;
+	}
 	public static $force_data = false;
 
 	/**
@@ -43,7 +80,7 @@ class Sync_Posts {
 	 * @since 0.0.0
 	 */
 	public function __construct() {
-		self::$sync_speed = get_option( 'linkboss_sync_speed', 10 );
+		self::$sync_speed = self::get_sync_speed();
 
 		// edited_term / created_term fire for every taxonomy; on_term_edit filters internally.
 		// Register unconditionally so plain WP (no WooCommerce) category edits also sync.
@@ -134,6 +171,11 @@ class Sync_Posts {
 		// Note: This guard primarily works for single post updates triggered by hooks.
 		if ( $post_id && isset( self::$processed_posts_in_request[ $post_id ] ) ) {
 			return; // Already processed, exit.
+		}
+
+		// Never send a post that is on the "Excluded from sync" list (v2.8.7).
+		if ( $post_id && Sync_Exclusions::is_excluded( $post_id ) ) {
+			return;
 		}
 
 		// Mark this post ID as processed for this request if applicable.
@@ -967,6 +1009,11 @@ class Sync_Posts {
 			// 'body'    => wp_json_encode( $body, true ),
 			'body'    => wp_json_encode( $body, 256 ),
 			'method'  => 'POST',
+			/**
+			 * Large batches (page-builder content) can take longer than
+			 * the 5s WP default; a timeout left them unmarked as sent
+			 */
+			'timeout' => 30,
 		);
 
 		$response = wp_remote_post( $api_url, $arg );

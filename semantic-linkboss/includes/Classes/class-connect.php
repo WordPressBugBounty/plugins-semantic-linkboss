@@ -329,6 +329,8 @@ class Connect {
 			$this->redirect_with_status( 'error', $exchange->get_error_code(), $display_name );
 		}
 
+		self::reset_sync_if_new_key();
+
 		/**
 		 * Success — reopen the wizard for fresh connects so the
 		 * first sync can auto-start; otherwise land on the
@@ -339,6 +341,46 @@ class Connect {
 		}
 
 		$this->redirect_with_status( 'success', '', '', admin_url( 'admin.php?page=semantic-linkboss&tab=setupWizard&linkboss_connect=success' ) );
+	}
+
+	/**
+	 * Start a fresh sync when the site connects with a new key
+	 *
+	 * The batch table remembers what was sent, not where: after a
+	 * disconnect (or deleting the site in the app) and connecting
+	 * again, possibly to another account, every post still reads
+	 * "Sync Done" and the first sync has nothing to send. The key
+	 * the content was synced with is stored as a hash; a connect
+	 * with any other key re-queues everything that was sent or
+	 * failed. Excluded ('X') and ignored ('0') rows stay as they are.
+	 *
+	 * @since 2.8.7
+	 * @return void
+	 */
+	public static function reset_sync_if_new_key() {
+		$api_key = (string) get_option( 'linkboss_api_key', '' );
+
+		if ( '' === $api_key ) {
+			return;
+		}
+
+		$key_hash = hash( 'sha256', $api_key );
+
+		if ( hash_equals( (string) get_option( 'linkboss_synced_key', '' ), $key_hash ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'linkboss_sync_batch';
+
+		// phpcs:ignore
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table ) {
+			// phpcs:ignore
+			$wpdb->query( "UPDATE {$table} SET sent_status = NULL WHERE sent_status IN ('1', 'F')" );
+		}
+
+		delete_option( 'linkboss_last_sync_done' );
+		update_option( 'linkboss_synced_key', $key_hash, false );
 	}
 
 	/**
@@ -371,7 +413,10 @@ class Connect {
 
 		/**
 		 * Best-effort remote unbind; the site may already be
-		 * deleted app-side, so the result is ignored.
+		 * deleted app-side, so the result is ignored. The app
+		 * marks the site disconnected but keeps it (and the
+		 * domain binding) in the account; only deleting it
+		 * under Sites frees the domain for another account.
 		 */
 		$access_token = Auth::get_access_token();
 
@@ -380,8 +425,7 @@ class Connect {
 
 			/**
 			 * An expired access token answers 401 — refresh it
-			 * from the stored key & retry once, so the domain is
-			 * actually freed app-side
+			 * from the stored key & retry once
 			 */
 			if ( 401 === (int) wp_remote_retrieve_response_code( $response ) ) {
 				Auth::refresh_access_token();
@@ -479,7 +523,11 @@ class Connect {
 				$args['display_name'] = $display_name;
 			}
 
-			$target = add_query_arg( $args, admin_url( 'admin.php?page=semantic-linkboss' ) );
+			/**
+			 * Land on the Connection tab so the status notice is
+			 * visible (the dashboard otherwise reopens the last tab)
+			 */
+			$target = add_query_arg( $args, admin_url( 'admin.php?page=semantic-linkboss' ) ) . '#settings';
 		}
 
 		wp_safe_redirect( $target );

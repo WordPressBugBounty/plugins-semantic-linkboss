@@ -205,6 +205,9 @@ class Auth {
 
 		update_option( 'linkboss_api_key', $api_key );
 
+		// A different key may mean another account: sync everything again
+		Connect::reset_sync_if_new_key();
+
 		/**
 		 * Clear any existing transient errors
 		 *

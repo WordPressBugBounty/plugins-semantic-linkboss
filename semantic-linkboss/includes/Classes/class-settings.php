@@ -149,6 +149,10 @@ class Settings {
 				}
 
 				return rest_ensure_response( $post_types, 200 );
+
+			case 'get_unsynced_post_types':
+				return rest_ensure_response( array( 'post_types' => self::get_unsynced_post_types() ), 200 );
+
 			case 'get_custom_query':
 				$linkboss_qb = get_option( 'linkboss_custom_query', '' );
 
@@ -190,17 +194,8 @@ class Settings {
 				return $categories;
 
 			case 'get_sync_speed':
-				$sync_speed = get_option( 'linkboss_sync_speed', 10 );
-				/**
-				 * If sync speed is not set, then set it to 50
-				 */
-				if ( $sync_speed > 50 ) {
-					$sync_speed = 50;
-				}
-
-				if ( ! $sync_speed ) {
-					return new WP_Error( 'no_sync_speed', esc_html__( 'Oops, Sync Speed is not found.' ), array( 'status' => 404 ) );
-				}
+				// Snapped to the current choices (default 5, max 30)
+				$sync_speed = Sync_Posts::get_sync_speed();
 
 				return rest_ensure_response(
 					array(
@@ -340,13 +335,14 @@ class Settings {
 				);
 
 			case 'save_sync_speed':
-				$sync_speed = isset( $params['sync_speed'] ) ? sanitize_text_field( $params['sync_speed'] ) : 512;
+				$sync_speed = isset( $params['sync_speed'] ) ? sanitize_text_field( $params['sync_speed'] ) : '';
 
 				if ( ! $sync_speed ) {
 					return new WP_Error( 'no_sync_speed', esc_html__( 'Oops, Sync Speed is not found.' ), array( 'status' => 404 ) );
 				}
 
-				update_option( 'linkboss_sync_speed', (int) $sync_speed );
+				$sync_speed = Sync_Posts::get_sync_speed( $sync_speed );
+				update_option( 'linkboss_sync_speed', $sync_speed );
 
 				return rest_ensure_response(
 					array(
@@ -398,6 +394,12 @@ class Settings {
 				$urls = isset( $params['urls'] ) ? $params['urls'] : array();
 				update_option( 'linkboss_removed_urls', $urls );
 
+				/**
+				 * Resolve the list & tag excluded rows (sent_status = 'X')
+				 * so queued ones are never sent and none count as waiting
+				 */
+				Sync_Exclusions::rebuild();
+
 				return rest_ensure_response(
 					array(
 						'status'  => 'success',
@@ -432,6 +434,7 @@ class Settings {
 
 				$remaining = array_values( array_diff( $current_removed_urls, $urls_to_restore ) );
 				update_option( 'linkboss_removed_urls', $remaining );
+				Sync_Exclusions::rebuild();
 
 				$restored_count = count( $current_removed_urls ) - count( $remaining );
 
@@ -636,6 +639,46 @@ class Settings {
 
 		$post_types = array_diff_key( $post_types, $ignore_post_types );
 		return $post_types;
+	}
+
+	/**
+	 * Content types with published items that aren't being synced
+	 *
+	 * Lets the UI say "we also found Products (124)…" only on sites
+	 * that have extra content; posts & pages stay the default.
+	 * Nothing to report in URL-sync mode (the list is hand-picked).
+	 *
+	 * @since 2.8.7
+	 * @return array[] { name, label, count }
+	 */
+	public static function get_unsynced_post_types() {
+		$query_data = get_option( 'linkboss_custom_query', false );
+
+		if ( isset( $query_data['sync_by'] ) && 'urls' === $query_data['sync_by'] ) {
+			return array();
+		}
+
+		$synced = isset( $query_data['post_sources'] ) && ! empty( $query_data['post_sources'] ) ? (array) $query_data['post_sources'] : array( 'post', 'page' );
+		$skip   = array_merge( $synced, array( 'post', 'page', 'attachment', 'elementor_library' ) );
+		$found  = array();
+
+		foreach ( get_post_types( array( 'public' => true ), 'objects' ) as $name => $type ) {
+			if ( in_array( $name, $skip, true ) ) {
+				continue;
+			}
+
+			$count = (int) wp_count_posts( $name )->publish;
+
+			if ( $count > 0 ) {
+				$found[] = array(
+					'name'  => $name,
+					'label' => $type->labels->name,
+					'count' => $count,
+				);
+			}
+		}
+
+		return $found;
 	}
 
 	/**

@@ -147,6 +147,17 @@ class Notices {
 	 */
 	public function show_notices() {
 		/**
+		 * The LinkBoss screen itself (Connection tab & setup
+		 * wizard) already shows the connection state
+		 */
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$on_linkboss_screen = isset( $_GET['page'] ) && 'semantic-linkboss' === sanitize_key( wp_unslash( $_GET['page'] ) );
+
+		if ( $on_linkboss_screen ) {
+			return;
+		}
+
+		/**
 		 * The key option is deleted on disconnect & absent on
 		 * fresh installs, so check for any empty value
 		 */

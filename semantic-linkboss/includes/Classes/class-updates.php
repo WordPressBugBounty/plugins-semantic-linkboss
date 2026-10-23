@@ -96,6 +96,17 @@ class Updates {
 			return;
 		}
 
+		/**
+		 * Excluded from sync: keep (or create) the row as 'X' so it is
+		 * never queued for sending
+		 *
+		 * @since 2.8.7
+		 */
+		if ( Sync_Exclusions::is_excluded( $post_id ) ) {
+			Sync_Exclusions::mark_excluded_rows();
+			return;
+		}
+
 		global $wpdb;
 
 		/**
