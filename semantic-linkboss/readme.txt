@@ -5,7 +5,7 @@ Tags: internal linking, SEO, automation, link building, auto link
 Requires at least: 6.0
 Tested up to: 7.1.3
 Requires PHP: 7.4
-Stable tag: 2.8.7
+Stable tag: 2.8.8
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -13,62 +13,81 @@ Boost SEO with AI-powered semantic internal linking. Build Silos, bulk interlink
 
 == Description ==
 
-**LinkBoss** is an AI-powered semantic internal linking plugin for WordPress. Save hours of manual SEO work with intelligent automation — build semantic links, fix anchor text cannibalization, and create a well-structured site architecture.
+**LinkBoss** is an AI-powered semantic internal linking plugin for WordPress. Most linking tools only connect posts that share the exact same words. LinkBoss understands meaning, so it finds every related post, even when the wording never matches, and places each link where it reads naturally.
 
-**New:** Now includes a **Free Google Search Console (GSC) Integration** for rank tracking and data-driven link suggestions.
+Build semantic links in bulk, fix orphan pages and dead ends in one click, prevent anchor text cannibalization, and give your site a well-structured architecture, all from one dashboard.
 
-=== What is LinkBoss? ===
+**New:** 1-Click Orphan Fix, 1-Click Dead End Fix, URL Replacement (0 credits) and Keyword Linker, with automatic snapshots so you can undo any run.
 
-https://youtu.be/88g3Cl-_UoI
+=== Semantic Internal Linking: Links by Meaning, Not Keywords ===
+
+https://www.youtube.com/watch?v=I2knk9hrBtE
 
 === Why Internal Linking Matters for SEO ===
 
-Internal linking is one of the most undervalued SEO strategies because it is hard to scale. LinkBoss solves this by using NLP (Natural Language Processing) and Machine Learning to scan your content and suggest contextually relevant links.
+Internal linking is one of the most undervalued SEO strategies because it is hard to scale. Internal links spread authority across your site, help Google discover your pages faster and understand your content hierarchy, and keep visitors reading longer.
 
-Whether you need to build a **Silo structure** in one click, **bulk interlink** 200+ posts, or **track your keyword rankings**, LinkBoss handles it all from one dashboard.
+LinkBoss uses NLP (Natural Language Processing) and Machine Learning to scan your content and suggest contextually relevant links. Whether you need to build a **Silo structure** in one click, **bulk interlink** thousands of posts, or **track your keyword rankings**, LinkBoss handles it all from one dashboard.
 
 === KEY FEATURES ===
 
-= 1. Bulk Automation & Speed =
-* **Bulk Interlinking:** Create up to 2000 interlinks in a single click.
-* **Existing Sentence Linking:** Uniquely identifies existing sentences in your old posts that are perfect for linking to new content.
+= 1. Bulk Auto Interlinking =
+* **Bulk Interlinking:** Insert up to 5,000 relevant internal links per batch.
+* **Pipeline Mode:** Tries three ways to place every link and keeps the first one that reads naturally: an **existing sentence** (links a phrase inside a sentence you already wrote, match ≥ 60%), a **rewritten sentence** (lightly rewrites one sentence so the anchor reads naturally, match ≥ 40%), or **context insertion** (adds a new, relevant sentence when nothing on the page fits, match ≥ 30%).
+* **Review or Automate:** Run it fully automated, or review every link pair before it goes live.
 
-= 2. Advanced Silo Builder (Topic Clusters) =
+= 2. 1-Click Fixes (with Snapshots) =
+* **1-Click Orphan Fix:** Links each orphan page from its best-matching donor page.
+* **1-Click Dead End Fix:** Adds relevant outbound links to dead-end pages, with an option to prefer orphan pages as targets.
+* **URL Replacement (0 credits):** Re-points every internal link from an old or moved URL to the new one in a single run.
+* **Keyword Linker:** Links an exact phrase to a chosen page across your posts, with every match previewed and approved first.
+* **Snapshots & Undo:** A snapshot is taken before every change. Compare & Revert a single post, or Bulk Revert a whole run.
+
+= 3. Advanced Silo Builder (Topic Clusters) =
 Dominate your niche by organizing content into authoritative clusters.
-* **One-Click Strategies:** Instantly build Reverse Silo, Serial Silo, Priority Silo, or Circle Silo structures.
+* **One-Click Silo Presets:** Pick a parent page and its child pages, and instantly build a Reverse Silo, Serial Silo, Priority Silo, or Hybrid Circle Silo.
 * **Visual Network:** View an interactive diagram of your site architecture to spot opportunities similar to Screaming Frog & Sitebulb.
 
-= 3. Site Audit & Health =
+= 4. Site Audit & Link Health =
+* **Link Health Score:** A dashboard overview with critical alerts for orphan pages, dead ends, duplicate links and cannibalization.
 * **Orphan Page Finder:** Visualizer tool identifies pages with no internal links so you can pass link juice to them.
-* **Anchor Text Manager:** Detects and prevents "Anchor Cannibalization" (when multiple pages compete for the same keyword).
+* **Anchor Text Manager:** Detects and prevents "Anchor Cannibalization" (when multiple pages compete for the same keyword) and keeps your anchor mix natural.
 * **Duplicate Link Fixer:** Finds and removes redundant links to improve user experience.
+* **Links Report:** Per-page inbound, outbound and external link counts with a Link Flow Score.
+* **HTTP Link Audit:** Finds internal links still pointing at non-HTTPS URLs.
 
-= 4. AI-Powered Smart Linking =
+= 5. AI-Powered Smart Linking =
 * **Contextual Accuracy:** LinkBoss understands the meaning of your content using semantic analysis, rather than relying on simple keyword matching.
-* **Smart Anchor Text:** NLP algorithms suggest natural, varied anchor text using AI to avoid over-optimization penalties. You can also bring in high-value anchor texts directly from search console.
-* **Multi-Language Support:** Full semantic analysis for **30+ languages** including English, Spanish, German, Dutch, French, Portuguese, Indonesian, Romanian, Italian, Danish, Finnish, Swedish, Tagalog, Traditional Chinese, Simplified Chinese, Malay, Polish, Russian, Bulgarian, Turkish, Czech, Hungarian, Serbian, Slovak, Arabic, Norwegian, Greek, Vietnamese, Albanian, Ukrainian, and more.
+* **Smart Anchor Text:** NLP algorithms suggest natural, varied anchor text using AI to avoid over-optimization penalties. You can also bring in high-value anchor texts directly from Search Console.
+* **Fresh Content for Context:** No good spot for a link? LinkBoss writes a unique paragraph around a relevant anchor.
+* **Multi-Language Support:** Full semantic analysis for **30+ languages** including English, Spanish, German, Dutch, French, Portuguese, Indonesian, Romanian, Italian, Danish, Finnish, Swedish, Tagalog, Traditional Chinese, Simplified Chinese, Japanese, Malay, Polish, Russian, Bulgarian, Turkish, Czech, Hungarian, Serbian, Slovak, Arabic, Norwegian, Greek, Vietnamese, Albanian, Ukrainian, and more.
 
-= 5. Free Google Search Console (GSC) Toolkit =
-* **GSC Rank Tracker:** Monitor keyword positions, clicks, and impressions.
-* **Data-Driven Suggestions:** Get internal link recommendations based on the actual keywords driving traffic to your site.
-* **Performance Analytics:** Visualize your site's growth without leaving the dashboard.
+= 6. Free Google Search Console (GSC) Toolkit =
+* **GSC Rank Tracker:** Monitor keyword positions, clicks, impressions and CTR, with week-over-week ranking movement.
+* **New Keyword Discovery & Downtrending Alerts:** Spot new queries and pages that are losing clicks.
+* **Keyword Cannibalization Checker:** Find pages competing for the same query.
+* **Data-Driven Suggestions:** Get anchor suggestions from your high-impression queries and link recommendations based on the keywords actually driving traffic to your site.
+
+=== FREE FOREVER ===
+
+Most of LinkBoss is free forever, with no card and no time limit. The site audit, GSC analytics, silo building and site structure visualization are all free. Credits are only used when you insert internal links, and you get 50 free credits on signup to try automatic link insertion. No credit card required.
 
 === COMPATIBILITY ===
 
 LinkBoss works perfectly with your favorite tools:
-* **Page Builders:** Elementor, Beaver Builder, Divi, Bricks, Oxygen, Thrive Architect.
+* **Page Builders:** Elementor, Beaver Builder, Divi (including Divi 5), Bricks, Oxygen, Thrive Architect.
 * **All Gutenberg Blocks:** Spectra, GenerateBlocks, Kadence, CoBlocks, Otter, EssentialBlocks, etc.
-* **Advanced:** Full support for **ACF (Advanced Custom Fields)** and **Custom Post Types**.
+* **Advanced:** Full support for **ACF (Advanced Custom Fields)**, **Custom Post Types**, WooCommerce products and category archives.
 
 === Who is LinkBoss for? ===
 * **Affiliate Marketers:** Build topical authority fast.
-* **Agencies:** Execute internal linking campaigns for clients in minutes, not days.
+* **Agencies:** Execute internal linking campaigns for clients in minutes, not days, and manage every site from one dashboard.
 * **Bloggers:** Revive old content by linking it to new posts.
 * **E-com owners:** Improve navigation and indexability for product pages.
 
-=== Demo & Tutorials ===
+=== Full Demo ===
 
-https://youtu.be/bSn3sQdPsh0
+https://www.youtube.com/watch?v=TVe9-KN2SHQ
 
 == Installation ==
 
@@ -83,7 +102,8 @@ https://youtu.be/bSn3sQdPsh0
 3.  The first sync starts on its own. When it finishes, you can check the synced post & page counts in the LinkBoss app under **Tools → Report → Site Report**.
 4.  Once synced, you can start building links!
 
-Installation video guide:
+= Installation Video Guide =
+
 https://youtu.be/0EVildOm1jA
 
 == Frequently Asked Questions ==
@@ -92,23 +112,29 @@ https://youtu.be/0EVildOm1jA
 
 LinkBoss uses advanced Natural Language Processing (NLP) and machine learning algorithms to analyze your content semantically. It identifies contextually relevant opportunities for internal links and suggests appropriate anchor text, ensuring each link adds value for both users and search engines. Rather than relying on simple keyword matching, LinkBoss understands the meaning and context of your content to surface the most relevant linking opportunities.
 
+= Is LinkBoss free? =
+Yes, most of it is free forever. The site audit, GSC analytics and rank tracking, and silo building are free with no time limit. Credits are only used when you insert internal links, and you get 50 free credits on signup to try it. No credit card required.
+
 = Is the GSC Rank Tracker really free? =
 Yes. The Google Search Console integration, including rank tracking, analytics, and GSC-based link suggestions, is included for free to help you make better linking decisions.
 
 = Will my links disappear if I delete the plugin? =
 **No.** LinkBoss creates real, permanent HTML links embedded directly in your content. If you deactivate or delete the plugin, your links remain 100% intact.
 
+= Can I undo changes? =
+Yes. LinkBoss takes a snapshot before every fix. You can compare and revert a single post, or revert a whole run in one click.
+
 = How does "Existing Sentence" linking work? =
 This is a user favorite. Instead of just highlighting a keyword, LinkBoss scans your old posts to find full sentences that are contextually relevant to your target URL. It turns a specific phrase within that existing sentence into a link, making it look completely natural and human-written.
 
 = Does it work with non-English sites? =
-Yes! We support over 30 languages (Spanish, German, French, Dutch, Portuguese, Italian, Chinese, Russian, Arabic, and many more) with native semantic understanding for each.
+Yes! We support over 30 languages (Spanish, German, French, Dutch, Portuguese, Italian, Chinese, Japanese, Russian, Arabic, and many more) with native semantic understanding for each.
 
 = Is LinkBoss compatible with other SEO tools? =
 Yes. It is compatible with Yoast, Rankmath, SEO Framework, AIOSEO, SEOPress, SlimSEO, Squirrly SEO, Ahrefs, Semrush, Surfer, Ubersuggest, Link Whisper, Linksy, LinkStorm, LinkBot, Linkilo, Linkter, YARPP, Inlinks, Internal Link Juicer, Interlinks Manager, Twylu etc. You can keep LinkBoss activated while using these.
 
 = Can I fix "Orphan Pages" with this? =
-Yes. The Site Visualizer tool highlights orphan pages (posts with zero internal links). You can then use the "Inbound" tool to quickly find other posts that should link to the orphan page.
+Yes. The dashboard and Site Visualizer highlight orphan pages (posts with zero internal links). Use the **1-Click Orphan Fix** to link every orphan page from its best-matching donor page at once, or the "Inbound" tool to pick the linking posts yourself.
 
 = How do I prevent over-optimization (Keyword Stuffing)? =
 Use the **Anchor Manager**. It highlights if you have used the exact same anchor text too many times or if multiple pages are competing for the same anchor (cannibalization).
@@ -129,6 +155,11 @@ Use the **Anchor Manager**. It highlights if you have used the exact same anchor
 12. **GSC Rank Tracker** - Monitor keyword performance with advanced filters (like Striking Distance & Top Results), track ranking changes (Improved vs. Declined), and analyze impressions and click data directly
 
 == Changelog ==
+
+= 2.8.8 - November 5, 2026 =
+* Fixed: Post and category dates are now sent to LinkBoss with their time zone, so recently updated content is picked up correctly on every site
+* Fixed: When LinkBoss adds links to a post, the post's last-modified time is now saved correctly for sites outside UTC
+* Added: New tutorial videos, including a full walkthrough and AI agent (MCP) setup
 
 = 2.8.7 - October 23, 2026 =
 * Fixed: The first sync now reliably starts on its own after connecting in the setup wizard
@@ -175,6 +206,9 @@ Use the **Anchor Manager**. It highlights if you have used the exact same anchor
 [View complete changelog](https://linkboss.io/changelog)
 
 == Upgrade Notice ==
+
+= 2.8.8 =
+Fixes how post dates are synced so updated content is detected correctly on sites outside UTC. Recommended for all sites.
 
 = 2.8.7 =
 The first sync now starts reliably after connecting, and the Sync tab shows a clear sync status. Recommended for all sites.

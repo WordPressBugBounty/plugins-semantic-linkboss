@@ -617,7 +617,7 @@ class Update_Posts {
 								$wpdb->posts,
 								array(
 									'post_content'      => $new_content,
-									'post_modified'     => $date,
+									'post_modified'     => get_date_from_gmt( $date ),
 									'post_modified_gmt' => $date,
 								),
 								array( 'ID' => $post_id )
@@ -652,7 +652,7 @@ class Update_Posts {
 						$wpdb->posts,
 						array(
 							'post_content'      => $classic_content,
-							'post_modified'     => $date,
+							'post_modified'     => get_date_from_gmt( $date ),
 							'post_modified_gmt' => $date,
 						),
 						array( 'ID' => $post_id )
@@ -679,7 +679,7 @@ class Update_Posts {
 				$post_updated_db = $wpdb->update(
 					$wpdb->posts,
 					array(
-						'post_modified'     => $date,
+						'post_modified'     => get_date_from_gmt( $date ),
 						'post_modified_gmt' => $date,
 					),
 					array( 'ID' => $post_id )
@@ -698,7 +698,7 @@ class Update_Posts {
 						$wpdb->posts,
 						array(
 							'post_content'      => $post_content,
-							'post_modified'     => $date,
+							'post_modified'     => get_date_from_gmt( $date ),
 							'post_modified_gmt' => $date,
 						),
 						array( 'ID' => $post_id )
