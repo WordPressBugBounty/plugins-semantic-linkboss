@@ -88,6 +88,7 @@ final class Core {
 			require_once SEMANTIC_LB_INC_PATH . 'Classes/class-updates.php';
 			require_once SEMANTIC_LB_INC_PATH . 'Classes/class-cron.php';
 			require_once SEMANTIC_LB_INC_PATH . 'Classes/class-sync-posts-api.php';
+			require_once SEMANTIC_LB_INC_PATH . 'Classes/class-remote.php';
 
 			if ( defined( 'SEMANTIC_LB_ELEMENTOR' ) ) {
 				require_once SEMANTIC_LB_INC_PATH . 'Classes/Builders/class-elementor.php';

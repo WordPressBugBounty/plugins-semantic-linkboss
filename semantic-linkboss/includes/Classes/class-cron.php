@@ -17,6 +17,7 @@ use SEMANTIC_LB\Classes\Updates;
 use SEMANTIC_LB\Classes\Update_Posts;
 use SEMANTIC_LB\Classes\Sync_Posts;
 use SEMANTIC_LB\Classes\Init;
+use SEMANTIC_LB\Classes\Remote;
 
 /**
  * Description of Cron
@@ -356,6 +357,7 @@ class Cron {
 	 * @since 0.0.5
 	 */
 	public static function fetch_update_posts() {
+		Remote::maybe_register();
 		Update_Posts::fetch_update_posts();
 	}
 

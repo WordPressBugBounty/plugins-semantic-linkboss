@@ -31,6 +31,12 @@ use SEMANTIC_LB\Classes\Auth;
 class Update_Posts {
 	private static $instance = null;
 
+	/** Most seconds spent writing posts in one pull; the rest stays queued for the next one. */
+	const WRITE_BUDGET_SECONDS = 15;
+
+	/** Finished posts are confirmed to LinkBoss in groups of this size, so a hard stop redoes little. */
+	const CONFIRM_EVERY = 5;
+
 	/**
 	 * Namespace
 	 *
@@ -97,55 +103,23 @@ class Update_Posts {
 	}
 
 	/**
-	 * Update Posts
+	 * Update Posts (socket / "Sync from LinkBoss" button)
 	 *
 	 * @since 2.7.0
 	 */
 	public function get_update_posts_socket( $request ) {
-		$sync_status = get_transient( 'linkboss_sync_ongoing' );
-
-		if ( 'yes' === $sync_status ) {
-			return new WP_Error( 'sync_ongoing', esc_html__( 'Sync Ongoing and that\'s why Post Update Blocked.', 'semantic-linkboss' ), array( 'status' => 403 ) );
+		// Keep writing even if the browser tab closes mid-batch.
+		if ( function_exists( 'ignore_user_abort' ) ) {
+			ignore_user_abort( true );
 		}
 
-		$api_url      = SEMANTIC_LB_POSTS_SYNC_URL;
-		$access_token = Auth::get_access_token();
+		$pulled = self::pull_and_apply();
 
-		if ( ! $access_token ) {
-			return Auth::get_tokens_by_auth_code();
+		if ( is_wp_error( $pulled ) ) {
+			return $pulled;
 		}
 
-		$headers = array(
-			'Content-Type'     => 'application/json',
-			'Authorization'    => "Bearer $access_token",
-			'X-PLUGIN-VERSION' => SEMANTIC_LB_VERSION,
-		);
-
-		$arg = array(
-			'headers' => $headers,
-			'method'  => 'GET',
-		);
-
-		$response = wp_remote_get( $api_url, $arg );
-		$res_body = json_decode( wp_remote_retrieve_body( $response ), true );
-		$res_body = isset( $res_body['posts'] ) ? $res_body['posts'] : array();
-
-		$status = wp_remote_retrieve_response_code( $response );
-
-		if ( 401 === $status ) {
-			return Auth::get_tokens_by_auth_code();
-		}
-
-		if ( 403 === $status ) {
-			update_option( 'linkboss_site_disconnected', true );
-			return new WP_Error( 'site_disconnected', esc_html__( 'Site has been removed from LinkBoss app. Please re-add it.', 'semantic-linkboss' ), array( 'status' => 403 ) );
-		}
-
-		if ( 200 !== $status ) {
-			return new WP_Error( 'response_error', esc_html__( 'Response Error!', 'semantic-linkboss' ), array( 'status' => $status ) );
-		}
-
-		if ( empty( $res_body ) ) {
+		if ( empty( $pulled['results'] ) ) {
 			return new WP_REST_Response(
 				array(
 					'status' => 'error',
@@ -156,37 +130,29 @@ class Update_Posts {
 			);
 		}
 
-		$results = self::update_posts( $res_body );
-		return new WP_REST_Response( $results, 200 );
+		return new WP_REST_Response( $pulled['results'], 200 );
 	}
 
 	/**
-	 * Fetch Posts by PUT request
+	 * Fetch queued post updates from LinkBoss and write them to WordPress.
+	 * Shared by the socket route, the cron job and remote "pull" commands.
+	 *
+	 * @param int $limit Most posts to fetch in this pull (0 = LinkBoss default). "Sync now" from the app asks for 20.
+	 * @return array|WP_Error { results, updated, failed } or an error with an HTTP status.
 	 */
-	public static function fetch_update_posts() {
-
+	public static function pull_and_apply( $limit = 0 ) {
 		$sync_status = get_transient( 'linkboss_sync_ongoing' );
 
 		if ( 'yes' === $sync_status ) {
-			echo wp_json_encode(
-				array(
-					'status' => 'error',
-					'title'  => 'Error!',
-					'msg'    => esc_html__( 'Sync Ongoing and that\'s why Post Update Blocked.', 'semantic-linkboss' ),
-				)
-			);
-			wp_die();
+			return new WP_Error( 'sync_ongoing', esc_html__( 'Sync Ongoing and that\'s why Post Update Blocked.', 'semantic-linkboss' ), array( 'status' => 403 ) );
 		}
 
-		if ( get_option( 'linkboss_site_disconnected', false ) ) {
-			return;
-		}
-
-		$api_url      = SEMANTIC_LB_POSTS_SYNC_URL;
+		$api_url      = $limit > 0 ? add_query_arg( 'limit', (int) $limit, SEMANTIC_LB_POSTS_SYNC_URL ) : SEMANTIC_LB_POSTS_SYNC_URL;
 		$access_token = Auth::get_access_token();
 
 		if ( ! $access_token ) {
-			return Auth::get_tokens_by_auth_code();
+			Auth::get_tokens_by_auth_code();
+			return new WP_Error( 'linkboss_auth_retry', esc_html__( 'Re-authenticating with LinkBoss. Please try again.', 'semantic-linkboss' ), array( 'status' => 503 ) );
 		}
 
 		$headers = array(
@@ -207,45 +173,132 @@ class Update_Posts {
 		$status = wp_remote_retrieve_response_code( $response );
 
 		if ( 401 === $status ) {
-			return Auth::get_tokens_by_auth_code();
+			Auth::get_tokens_by_auth_code();
+			return new WP_Error( 'linkboss_auth_retry', esc_html__( 'Re-authenticating with LinkBoss. Please try again.', 'semantic-linkboss' ), array( 'status' => 503 ) );
 		}
 
 		if ( 403 === $status ) {
 			update_option( 'linkboss_site_disconnected', true );
-			echo wp_json_encode(
-				array(
-					'status' => 'error',
-					'title'  => 'Error!',
-					'msg'    => esc_html__( 'Site removed from LinkBoss app. Sync paused.', 'semantic-linkboss' ),
-				)
-			);
-			wp_die();
+			return new WP_Error( 'site_disconnected', esc_html__( 'Site has been removed from LinkBoss app. Please re-add it.', 'semantic-linkboss' ), array( 'status' => 403 ) );
 		}
 
 		if ( 200 !== $status ) {
-			echo wp_json_encode(
-				array(
-					'status' => 'error',
-					'title'  => 'Error! ' . $status,
-					'msg'    => esc_html__( 'Response Error!', 'semantic-linkboss' ),
-				)
-			);
-			wp_die();
+			// Say what went wrong, so the app (and wp-admin) can show it.
+			$detail = is_wp_error( $response )
+				/* translators: %s: network or SSL error message */
+				? sprintf( esc_html__( 'Could not reach LinkBoss: %s', 'semantic-linkboss' ), esc_html( $response->get_error_message() ) )
+				/* translators: %s: HTTP status code */
+				: sprintf( esc_html__( 'LinkBoss answered HTTP %s', 'semantic-linkboss' ), esc_html( (string) $status ) );
+
+			return new WP_Error( 'response_error', $detail, array( 'status' => 502 ) );
 		}
 
 		if ( empty( $res_body ) ) {
-
-			// echo wp_json_encode(
-			//  array(
-			//      'status' => 'success',
-			//      'title'  => 'Success!',
-			//      'msg'    => esc_html__( 'No data to Update', 'semantic-linkboss' ),
-			//  )
-			// );
-			wp_die();
+			return array(
+				'results' => array(),
+				'updated' => 0,
+				'failed'  => 0,
+			);
 		}
 
-		self::update_posts( $res_body );
+		$results = self::update_posts( $res_body, microtime( true ) + self::write_budget() );
+		$updated = count(
+			array_filter(
+				$results,
+				function ( $result ) {
+					return 'success' === $result['status'];
+				}
+			)
+		);
+
+		return array(
+			'results'  => $results,
+			'updated'  => $updated,
+			'failed'   => count( $results ) - $updated,
+			// Fetched but not started within the time budget: still queued, sent with the next pull.
+			'deferred' => max( 0, count( $res_body ) - count( $results ) ),
+		);
+	}
+
+	/**
+	 * Seconds to spend writing in one pull: 15, or half of PHP's time limit when that is lower, so the request always
+	 * finishes on its own (no reliance on raising the host's limit).
+	 */
+	private static function write_budget() {
+		$limit = (int) ini_get( 'max_execution_time' );
+
+		return $limit > 0 ? min( self::WRITE_BUDGET_SECONDS, max( 5, (int) floor( $limit / 2 ) ) ) : self::WRITE_BUDGET_SECONDS;
+	}
+
+	/**
+	 * Purge this post's page from common page caches (only those installed), so visitors see the new links.
+	 * Never throws: a misbehaving cache plugin must not break the sync.
+	 */
+	private static function purge_page_caches( $post_id ) {
+		try {
+			if ( function_exists( 'rocket_clean_post' ) ) {
+				rocket_clean_post( $post_id ); // WP Rocket
+			}
+			if ( has_action( 'litespeed_purge_post' ) ) {
+				do_action( 'litespeed_purge_post', $post_id ); // LiteSpeed Cache
+			}
+			if ( function_exists( 'w3tc_flush_post' ) ) {
+				w3tc_flush_post( $post_id ); // W3 Total Cache
+			}
+			if ( function_exists( 'wp_cache_post_change' ) ) {
+				wp_cache_post_change( $post_id ); // WP Super Cache
+			}
+			if ( function_exists( 'wpfc_clear_post_cache_by_id' ) ) {
+				wpfc_clear_post_cache_by_id( $post_id ); // WP Fastest Cache
+			}
+			if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
+				sg_cachepress_purge_cache( get_permalink( $post_id ) ); // SiteGround Optimizer
+			}
+			if ( class_exists( 'WpeCommon' ) && method_exists( 'WpeCommon', 'purge_varnish_cache' ) ) {
+				\WpeCommon::purge_varnish_cache( $post_id ); // WP Engine
+			}
+			if ( has_action( 'cache_enabler_clear_page_cache_by_post' ) ) {
+				do_action( 'cache_enabler_clear_page_cache_by_post', $post_id ); // Cache Enabler
+			}
+
+			/**
+			 * After LinkBoss wrote new content to a post: hosts and other caches can purge here.
+			 *
+			 * @param int $post_id The updated post.
+			 */
+			do_action( 'linkboss_post_content_updated', $post_id );
+		} catch ( \Throwable $e ) {
+			// Ignore: the content is saved; a cache will catch up on its own.
+		}
+	}
+
+	/**
+	 * Delete Elementor's generated CSS for this post only. Returns false when that isn't possible (the caller then
+	 * clears Elementor's whole CSS cache once per batch instead of once per post).
+	 */
+	private static function clear_elementor_post_css( $post_id ) {
+		try {
+			if ( class_exists( '\\Elementor\\Core\\Files\\CSS\\Post' ) ) {
+				\Elementor\Core\Files\CSS\Post::create( $post_id )->delete();
+				return true;
+			}
+		} catch ( \Throwable $e ) {
+			return false;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Cron: fetch and apply queued post updates.
+	 * Returns quietly: wp_die() here would end the whole wp-cron run (and other plugins' due events with it).
+	 */
+	public static function fetch_update_posts() {
+		if ( get_option( 'linkboss_site_disconnected', false ) ) {
+			return;
+		}
+
+		self::pull_and_apply();
 	}
 
 	public static function thrive_extract_content_before_more( $content, $post_id ) {
@@ -432,13 +485,19 @@ class Update_Posts {
 	/**
 	 * Server Response to Update Posts
 	 */
-	public static function update_posts( $data ) {
+	public static function update_posts( $data, $deadline = 0 ) {
 		/**
 		 * Store the post IDs that were updated successfully
 		 * id: "post_id"
 		 */
 		$updated_posts = array();
 		$results       = array(); // Store results for all posts
+
+		// Confirmed to LinkBoss in small groups as we go (see CONFIRM_EVERY).
+		$to_confirm = array();
+
+		// Set when Elementor's per-post CSS couldn't be deleted: clear its whole cache once at the end instead.
+		$clear_all_elementor_css = false;
 
 		// Check if ACF support is enabled
 		// $acf_enabled = get_option( 'linkboss_acf_enabled', false );
@@ -449,6 +508,11 @@ class Update_Posts {
 		 * Assuming $data is the array containing post data
 		 */
 		foreach ( $data as $post_data ) {
+			// Time budget used up: leave the rest queued for the next pull (always answer in time, never hit PHP's limit).
+			if ( $deadline && microtime( true ) >= $deadline ) {
+				break;
+			}
+
 			/**
 			 * Check if this is a category archive and WooCommerce is enabled
 			 */
@@ -457,6 +521,7 @@ class Update_Posts {
 				if ( $term_id ) {
 					// Add the term ID to updated posts
 					array_push( $updated_posts, array( 'post_id' => (string) $term_id ) );
+					$to_confirm[] = array( 'post_id' => (string) $term_id );
 					$results[] = array(
 						'status'   => 'success',
 						'title'    => 'Category updated.',
@@ -703,6 +768,15 @@ class Update_Posts {
 						),
 						array( 'ID' => $post_id )
 					);
+
+					// Verify the row really changed (the modified time we set is stored). Content itself isn't compared:
+					// WordPress may adjust characters on save, and a false mismatch would retry the post forever.
+					if ( is_int( $post_updated ) && $post_updated > 0 ) {
+						$stored = $wpdb->get_var( $wpdb->prepare( "SELECT post_modified_gmt FROM {$wpdb->posts} WHERE ID = %d", $post_id ) );
+						if ( $stored !== $date ) {
+							$post_updated = false;
+						}
+					}
 				}
 			}
 
@@ -710,16 +784,13 @@ class Update_Posts {
 				wp_cache_delete( $post_id, 'posts' );
 				clean_post_cache( $post_id );
 
-				// Clear Elementor cache (latest supported method)
-				if ( class_exists( '\Elementor\Plugin' ) ) {
-					$elementor_instance = \Elementor\Plugin::instance();
-					if (
-						isset( $elementor_instance->files_manager ) &&
-						method_exists( $elementor_instance->files_manager, 'clear_cache' )
-					) {
-						$elementor_instance->files_manager->clear_cache();
-					}
+				// Elementor: delete only this post's CSS (clearing every page's CSS per post was heavy on the server).
+				if ( class_exists( '\Elementor\Plugin' ) && ! self::clear_elementor_post_css( $post_id ) ) {
+					$clear_all_elementor_css = true;
 				}
+
+				// Page caches (WP Rocket, LiteSpeed, ...): purge this page so visitors see the new links.
+				self::purge_page_caches( $post_id );
 			}
 
 			/**
@@ -750,6 +821,7 @@ class Update_Posts {
 				 * Store the post ID in the array
 				 */
 				array_push( $updated_posts, array( 'post_id' => $post_id ) );
+				$to_confirm[] = array( 'post_id' => $post_id );
 				$results[] = array(
 					'status'   => 'success',
 					'title'    => 'Post updated.',
@@ -758,13 +830,30 @@ class Update_Posts {
 					'post_url' => get_permalink( $post_id ),
 				);
 			}
+
+			// Confirm finished posts in small groups, so a hard stop (PHP limit, crash) only redoes a few.
+			if ( count( $to_confirm ) >= self::CONFIRM_EVERY ) {
+				self::send_updated_posts_ids( $to_confirm );
+				$to_confirm = array();
+			}
+		}
+
+		if ( $clear_all_elementor_css ) {
+			try {
+				$elementor_instance = \Elementor\Plugin::instance();
+				if ( isset( $elementor_instance->files_manager ) && method_exists( $elementor_instance->files_manager, 'clear_cache' ) ) {
+					$elementor_instance->files_manager->clear_cache();
+				}
+			} catch ( \Throwable $e ) {
+				// Ignore: Elementor regenerates CSS on its own.
+			}
 		}
 
 		/**
-				 * Send updated Post IDs to LinkBoss
-				 */
-		if ( ! empty( $updated_posts ) ) {
-			self::send_updated_posts_ids( $updated_posts );
+		 * Send the remaining updated Post IDs to LinkBoss
+		 */
+		if ( ! empty( $to_confirm ) ) {
+			self::send_updated_posts_ids( $to_confirm );
 		}
 
 		return $results; // Return results for all posts

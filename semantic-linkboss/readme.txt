@@ -5,7 +5,7 @@ Tags: internal linking, SEO, automation, link building, auto link
 Requires at least: 6.0
 Tested up to: 7.1.3
 Requires PHP: 7.4
-Stable tag: 2.8.8
+Stable tag: 2.8.9
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -156,6 +156,13 @@ Use the **Anchor Manager**. It highlights if you have used the exact same anchor
 
 == Changelog ==
 
+= 2.8.9 - November 16, 2026 =
+* Added: LinkBoss can now ask your site to apply new links right away, instead of waiting for the next scheduled check
+* Improved: Large batches of link updates are applied in smaller steps, so they no longer time out on slower hosts
+* Improved: Page caches (WP Rocket, LiteSpeed, W3 Total Cache, WP Super Cache, WP Fastest Cache, SiteGround, WP Engine, Cache Enabler) are cleared for each updated post, so visitors see new links sooner
+* Fixed: Clearer error messages when the site can't reach LinkBoss
+* Fixed: The background LinkBoss connection now loads only for administrators
+
 = 2.8.8 - November 5, 2026 =
 * Fixed: Post and category dates are now sent to LinkBoss with their time zone, so recently updated content is picked up correctly on every site
 * Fixed: When LinkBoss adds links to a post, the post's last-modified time is now saved correctly for sites outside UTC
@@ -206,6 +213,9 @@ Use the **Anchor Manager**. It highlights if you have used the exact same anchor
 [View complete changelog](https://linkboss.io/changelog)
 
 == Upgrade Notice ==
+
+= 2.8.9 =
+New links from LinkBoss are applied faster and more reliably, and page caches are cleared so visitors see them. Recommended for all sites.
 
 = 2.8.8 =
 Fixes how post dates are synced so updated content is detected correctly on sites outside UTC. Recommended for all sites.

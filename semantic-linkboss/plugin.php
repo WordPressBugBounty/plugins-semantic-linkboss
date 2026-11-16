@@ -62,6 +62,14 @@ final class Plugin {
 	 */
 	public function enqueue_scripts( $hook_suffix ) {
 
+		/**
+		 * The socket script carries the site's LinkBoss token, and the routes it calls need manage_options,
+		 * so only load it for those users (same capability as the LinkBoss menu page).
+		 */
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
 		wp_register_script( 'linkboss-socket', SEMANTIC_LB_ASSETS_URL . 'vendor/socket.io.min.js', array(), 'v4.8.1', true );
 		wp_enqueue_script( 'linkboss-socket' );
 
@@ -72,6 +80,7 @@ final class Plugin {
 			array(
 				'access_token' => $access_token,
 				'api_url'      => esc_url( SEMANTIC_LB_REMOTE_ROOT_URL ),
+				'rest_url'     => esc_url_raw( get_rest_url() ),
 				'assets_url'   => SEMANTIC_LB_ASSETS_URL,
 				'nonce'        => wp_create_nonce( 'wp_rest' ),
 			)
